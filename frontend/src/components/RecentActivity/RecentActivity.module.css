@@ -1,0 +1,32 @@
+.activityList {
+  list-style: none;       /* remove default bullets */
+  padding-left: 0;
+  margin: 0;
+}
+.mainCard{
+    background-color: #f8f8f8 ;
+
+}
+.activityList li {
+  position: relative;
+  padding-left: 25px;     /* space for custom bullet */
+  margin-bottom: 1rem;
+}
+
+.activityList li span {
+  display: block;
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 2px;        /* spacing below main text */
+}
+
+/* Custom bullet */
+.activityList li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);   /* vertically center with text */
+  font-size: 2.5rem;             /* bullet size */
+  color: var(--bullet-color);    /* dynamic bullet color */
+}

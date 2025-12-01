@@ -1,0 +1,96 @@
+/* EditBooking.css */
+
+/* Overlay background */
+.new-booking-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Centered booking form card */
+.new-booking-page {
+  width: 100%;
+  max-width: 700px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-in-out;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide-up effect */
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Input & select styling */
+.new-booking-page .form-control,
+.new-booking-page .form-select {
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.new-booking-page .form-control:focus,
+.new-booking-page .form-select:focus {
+  border-color: #198754; /* Bootstrap success green */
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+/* Buttons spacing */
+.new-booking-page .btn {
+  border-radius: 6px;
+  padding: 0.5rem 1.2rem;
+  font-weight: 500;
+}
+
+/* Force dropdown menu to have a vertical slider when many options */
+.villa-dropdown option {
+  padding: 8px;
+}
+
+.villa-dropdown {
+  max-height: 200px; /* Height for the options when expanded */
+  overflow-y: auto;  /* Enable scroll inside */
+}
+
+/* Optional: Customize scrollbar */
+.villa-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+.villa-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.villa-dropdown::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.villa-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
