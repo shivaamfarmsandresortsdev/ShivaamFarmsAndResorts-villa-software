@@ -7,15 +7,26 @@ import { MdCurrencyRupee } from "react-icons/md";
 import { GoPeople } from "react-icons/go";
 import { LuBox } from "react-icons/lu";
 import { getStaff } from "../service/staffApi";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   // === States ===
+
+   const navigate = useNavigate();
+
+   
   const [staffCount, setStaffCount] = useState(0);
   const [totalBookings, setTotalBookings] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [items, setItems] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [showLowStockModal, setShowLowStockModal] = useState(false);
+
+   // ✅ Logout Function
+  const handleLogout = () => {
+    localStorage.removeItem("loggedIn");
+    navigate("/login");
+  };
 
   // === Fetch Staff Count ===
   useEffect(() => {
@@ -110,6 +121,15 @@ const Dashboard = () => {
   // === Render ===
   return (
     <div className="overviewContainer container">
+        {/* ✅ LOGOUT BUTTON (Top Right) */}
+      <div className="d-flex justify-content-end mt-3">
+        <button
+          className="btn btn-danger px-4 py-2"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </div>
       <div className="py-4">
         {/* --- Quick Actions --- */}
         <h2 className="fs-4 fw-500">Quick Actions</h2>

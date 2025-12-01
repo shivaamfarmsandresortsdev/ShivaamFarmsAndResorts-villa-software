@@ -1,48 +1,132 @@
-import React, {useState} from "react";
-import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./App.css";
+
 import Navbar from "./components/Navbar/Navbar.jsx";
 import Sidebar from "./components/Sidebar/Sidebar.jsx";
-import Footer from "./components/Footer/Footer.jsx"
+import Footer from "./components/Footer/Footer.jsx";
+
 import Dashboard from "./pages/Dashboard";
 import Staff from "./pages/Staff.jsx";
 import Finance from "./pages/Finance.jsx";
 import Booking from "./pages/Booking.jsx";
 import Stocks from "./pages/Stocks.jsx";
-import CheckInForm from "./pages/CheckInForm.jsx"
+import CheckInForm from "./pages/CheckInForm.jsx";
 import Settings from "./pages/Settings.jsx";
-import ScrollToTop from "./components/ScrollToTop/ScrollToTop.jsx";
 
+import ScrollToTop from "./components/ScrollToTop/ScrollToTop.jsx";
+import Login from "./pages/Login.jsx";
+import Protected from "./Protected.jsx";
+
+
+// ⭐ Layout wrapper for hiding sidebar/navbar on login page
+function Layout({ children }) {
+  const location = useLocation();
+
+  // 🤍 Login page par Navbar & Sidebar hide honge
+  const hideLayout = location.pathname === "/login";
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  return (
+    <>
+      {!hideLayout && (
+        <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      )}
+
+      <div className="main-content">
+        {!hideLayout && <Navbar toggleSidebar={toggleSidebar} />}
+
+        <div className="p-4">{children}</div>
+
+        {!hideLayout && <Footer />}
+      </div>
+    </>
+  );
+}
 
 const App = () => {
-    const [isSidebarOpen,
-        setIsSidebarOpen] = useState(false);
-    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  return (
+    <Router>
+      <ScrollToTop />
 
-    return (
-        <Router>
-        <ScrollToTop/>
-            <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar}/>
+      <Layout>
+        <Routes>
 
-            <div className="main-content">
-                <Navbar toggleSidebar={toggleSidebar}/>
-                <div className="p-4">
-                    <Routes>
-                        <Route path="/" element={< Dashboard />}/>
-                        <Route path="/staff" element={< Staff />}/>
-                        <Route path="/finance" element={< Finance />}/>
-                        <Route path="/booking" element={< Booking />}/>
-                        <Route path="/stocks" element={< Stocks />}/>
-                        <Route path="/checkInForm" element={< CheckInForm />} />
-                        <Route path="/settings" element={< Settings />}/>
-                    </Routes>
-                </div>
-                <Footer/>
-            </div>
-        </Router>
-    );
+          {/* ⭐ Public Route */}
+          <Route path="/login" element={<Login />} />
+
+          {/* ⭐ Protected Routes */}
+          <Route
+            path="/"
+            element={
+              <Protected>
+                <Dashboard />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/staff"
+            element={
+              <Protected>
+                <Staff />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/finance"
+            element={
+              <Protected>
+                <Finance />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/booking"
+            element={
+              <Protected>
+                <Booking />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/stocks"
+            element={
+              <Protected>
+                <Stocks />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/checkInForm"
+            element={
+              <Protected>
+                <CheckInForm />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <Protected>
+                <Settings />
+              </Protected>
+            }
+          />
+
+        </Routes>
+      </Layout>
+    </Router>
+  );
 };
 
 export default App;
