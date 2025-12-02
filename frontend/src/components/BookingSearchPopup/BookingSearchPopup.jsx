@@ -140,7 +140,7 @@ useEffect(() => {
                 <div className="small mb-1"> Payment: {b.payment_mode || "-"}</div>
                 <div className="small mb-1"> Advance: ₹{b.advanced_amount || 0}</div>
                 <div className="small mb-1"> Balance: ₹{b.remaining_amount || 0}</div>
-                <div className="fw-bold">Total: ₹{b.amount || 0}</div>
+                <div className="fw-bold">Total: ₹{b.total_amount || 0}</div>
 
                 {b.status && (
                   <div className="badge bg-secondary mt-2">{b.status}</div>

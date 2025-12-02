@@ -50,7 +50,7 @@ const Dashboard = () => {
         setTotalBookings(data.length || 0);
 
         const totalRev = data.reduce(
-          (sum, item) => sum + (item.amount || 0),
+          (sum, item) => sum + (item.total_amount || 0),
           0
         );
         setTotalRevenue(totalRev);

@@ -120,7 +120,7 @@ const CheckInForm = () => {
           paymentMode: item.payment_mode,
           advance: item.advance,
           balance: item.balance,
-          total: item.total,
+          total: item.total_amount,
         }));
 
         const uniqueReservations = mappedData.filter(
@@ -185,7 +185,7 @@ const CheckInForm = () => {
         paymentMode: booking.payment_mode || "Cash",
         advance: booking.advanced_amount || 0,
         balance: booking.remaining_amount || 0,
-        total: booking.amount || 0,
+        total: booking.total || booking.total_amount || 0,
         firstName,
         lastName,
         phone: booking.phone || "",
