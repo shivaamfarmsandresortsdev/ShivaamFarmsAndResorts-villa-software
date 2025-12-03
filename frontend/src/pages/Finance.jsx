@@ -76,7 +76,7 @@ const Finance = () => {
     let bookingData = [];
 
     axios
-      .get("http://localhost:5000/api/stocks")
+      .get("https://shivaam-farms-and-resorts-villa.onrender.com/api/stocks")
       .then((res) => {
         if (Array.isArray(res.data)) {
           stockData = res.data.map((item) => ({
@@ -101,7 +101,7 @@ const Finance = () => {
             total_amount: Number(item.price) || 0,
           }));
         }
-        return axios.get("http://localhost:5000/api/bookings");
+        return axios.get("https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings");
       })
       .then((res) => {
         const bookingArray = Array.isArray(res.data)
