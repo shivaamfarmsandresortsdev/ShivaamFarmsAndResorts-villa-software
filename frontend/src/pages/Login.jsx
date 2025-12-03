@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
-import logo from "../assets/images/shivaam-Farms-and-Resort.png";  // logo import
+import logo from "../assets/images/shivaam-farms-and-resorts.png";  // logo import
 
 export default function Login() {
   const [username, setUsername] = useState("");
