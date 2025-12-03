@@ -9,7 +9,7 @@ const NewBooking = ({ onClose, onSave }) => {
     phone: "",
     address: "",
     aadhar: "",
-    villa: "Villa 1",
+    villa: "Sample Villa",
     checkIn: "",
     checkOut: "",
     nights: 0,
@@ -25,6 +25,20 @@ const NewBooking = ({ onClose, onSave }) => {
     advancedAmount: 0,
     remainingAmount: 0,
   });
+
+  const villaOptions = [
+  "All Villas",
+  "Sample Villa",
+  "Ishaan Villa",
+  "Khetan Villa",
+  "Pandhari Villa",
+  "Villa 5",
+  "Villa 6",
+  "Villa 7",
+  "Villa 8",
+  "Villa 9",
+  "Villa 10"
+];
 
   const [dateError, setDateError] = useState("");
 
@@ -208,11 +222,19 @@ const NewBooking = ({ onClose, onSave }) => {
 
             <div className="col-12 col-sm-6">
               <label>Villa</label>
-              <select name="villa" value={formData.villa} onChange={handleChange} className="form-select">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <option key={i} value={`Villa ${i + 1}`}>Villa {i + 1}</option>
-                ))}
-              </select>
+              <select
+  name="villa"
+  value={formData.villa}
+  onChange={handleChange}
+  className="form-select"
+>
+  {villaOptions.map((villa, index) => (
+    <option key={index} value={villa}>
+      {villa}
+    </option>
+  ))}
+</select>
+
             </div>
 
             <div className="col-12 col-sm-6">
