@@ -182,7 +182,7 @@ const RecentTransactions = () => {
       </div>
 
       <div className="card-body p-0">
-        <div className="table-responsive d-none d-md-block">
+        <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
             <thead className="table-light">
               <tr>
