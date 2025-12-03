@@ -118,7 +118,7 @@ const Stocks = () => {
               {selectedVilla} {/* Show selected villa */}
             </button>
             <ul className="dropdown-menu" aria-labelledby="villasDropdown">
-              {["All Villas", "Sample Villa", "Ishaan Villa", "Khetan Villa", "Pandhari Villa", "Villa 5", "Villa 6", "Villa 7", "Villa 8", "Villa 9", "villa east"].map(villa => (
+              {["All Villas", "Sample Villa", "Ishaan Villa", "Khetan Villa", "Pandhari Villa", "Patel Villa", "More Villa", "Madan Villa", "Villa 8", "Villa 9", "villa east"].map(villa => (
                 <li key={villa}>
                   <a
                     className="dropdown-item"
@@ -429,9 +429,9 @@ const Stocks = () => {
                   <option>Ishaan Villa</option>
                   <option>Khetan Villa</option>
                   <option>Pandhari Villa</option>
-                  <option>Villa 5</option>
-                  <option>Villa 6</option>
-                  <option>Villa 7</option>
+                  <option>Patel Villa</option>
+                  <option>More Villa</option>
+                  <option>Madan Villa</option>
                   <option>Villa 8</option>
                   <option>Villa 9</option>
                   <option>Villa east</option>

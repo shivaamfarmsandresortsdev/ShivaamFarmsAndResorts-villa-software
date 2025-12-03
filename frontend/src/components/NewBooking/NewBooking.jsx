@@ -32,9 +32,9 @@ const NewBooking = ({ onClose, onSave }) => {
   "Ishaan Villa",
   "Khetan Villa",
   "Pandhari Villa",
-  "Villa 5",
-  "Villa 6",
-  "Villa 7",
+  "Patel Villa",
+  "More Villa",
+  "Madan Villa",
   "Villa 8",
   "Villa 9",
   "Villa 10"
