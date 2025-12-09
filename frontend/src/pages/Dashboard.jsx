@@ -50,9 +50,10 @@ const Dashboard = () => {
         setTotalBookings(data.length || 0);
 
         const totalRev = data.reduce(
-          (sum, item) => sum + (item.total_amount || 0),
-          0
-        );
+  (sum, item) => sum + (Number(item.customer_payment) || 0),
+  0
+);
+
         setTotalRevenue(totalRev);
       } catch (err) {
         console.error("Failed to fetch bookings data:", err);
