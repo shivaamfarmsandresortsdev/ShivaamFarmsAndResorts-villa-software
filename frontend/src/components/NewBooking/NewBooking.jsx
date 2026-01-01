@@ -514,9 +514,14 @@ const NewBooking = ({ onClose, onSave }) => {
               <label>Nights</label>
               <input
                 className="form-control"
-                value={row.nights ? `${row.nights} nights` : ""}
+                value={
+                  Number.isFinite(row.nights) && row.nights > 0
+                    ? `${row.nights} nights`
+                    : ""
+                }
                 readOnly
               />
+
             </div>
 
             <div className="col-12 col-sm-6">
@@ -591,9 +596,10 @@ const NewBooking = ({ onClose, onSave }) => {
                 className="form-control"
                 value={
                   row.paymentCategory === "Advanced"
-                    ? row.advancedAmount
-                    : row.totalAmount
+                    ? Number.isFinite(row.advancedAmount) ? row.advancedAmount : 0
+                    : Number.isFinite(row.totalAmount) ? row.totalAmount : 0
                 }
+
                 readOnly
               />
             </div>
@@ -601,7 +607,11 @@ const NewBooking = ({ onClose, onSave }) => {
 
             <div className="col-12 col-sm-6">
               <label>Total Amount</label>
-              <input className="form-control" value={row.totalAmount} readOnly />
+              <input
+                className="form-control"
+                value={Number.isFinite(row.totalAmount) ? row.totalAmount : 0}
+                readOnly
+              />
             </div>
 
             {row.paymentCategory === "Advanced" && (
@@ -620,7 +630,11 @@ const NewBooking = ({ onClose, onSave }) => {
 
                 <div className="col-12 col-sm-6">
                   <label>Remaining</label>
-                  <input className="form-control" value={row.remainingAmount} readOnly />
+                  <input
+                    className="form-control"
+                    value={Number.isFinite(row.remainingAmount) ? row.remainingAmount : 0}
+                    readOnly
+                  />
                 </div>
               </>
             )}
@@ -753,7 +767,15 @@ const NewBooking = ({ onClose, onSave }) => {
 
               <div className="col-12 col-sm-6">
                 <label>Nights</label>
-                <input value={formData.nights ? `${formData.nights} nights` : ""} readOnly className="form-control" />
+                <input
+                  value={
+                    Number.isFinite(formData.nights) && formData.nights > 0
+                      ? `${formData.nights} nights`
+                      : ""
+                  }
+                  readOnly
+                />
+
               </div>
 
               <div className="col-12 col-sm-6">
@@ -822,14 +844,20 @@ const NewBooking = ({ onClose, onSave }) => {
 
                   <div className="col-12 col-sm-6">
                     <label>Remaining (₹)</label>
-                    <input value={formData.remainingAmount} readOnly className="form-control" />
+                    <input
+                      value={Number.isFinite(formData.totalAmount) ? formData.totalAmount : 0}
+                      readOnly
+                    />
                   </div>
                 </>
               )}
 
               <div className="col-12 col-sm-6">
                 <label>Total Amount (auto)</label>
-                <input value={formData.totalAmount} readOnly className="form-control" />
+                <input
+                  value={Number.isFinite(formData.remainingAmount) ? formData.remainingAmount : 0}
+                  readOnly
+                />
               </div>
 
               <div className="col-12 col-sm-6">

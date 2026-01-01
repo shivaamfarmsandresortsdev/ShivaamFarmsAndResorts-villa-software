@@ -3,7 +3,7 @@ import {
   addBooking,
   addBulkBookings,
   getAllBookings,
-  // deleteBulkBooking,
+  deleteBulkBooking,
   deleteBooking,
   generateInvoice,
   getBookedDates,
@@ -34,7 +34,7 @@ router.get("/villa/:villa", getBookingsByVilla);
 router.put("/:id", updateBooking);
 
 // Delete
-// router.delete("/bulk/:bulk_id", deleteBulkBooking);
+router.delete("/bulk/:bulk_id", deleteBulkBooking);
 router.delete("/:id", deleteBooking);
 
 export default router;

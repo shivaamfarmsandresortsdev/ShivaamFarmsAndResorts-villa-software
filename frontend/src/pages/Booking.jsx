@@ -15,6 +15,9 @@ import EditBooking from "../components/EditBooking/EditBooking";
 import Invoice from "../components/Invoice/Invoice";
 import "./Booking.css";
 
+  const API_BASE =
+    import.meta.env.VITE_API_BASE ||
+    "https://shivaam-farms-and-resorts-villa-kynh.onrender.com";
 // ---------------- CSV Export ----------------
 const exportToCSV = (rows, filename) => {
   if (!rows.length) return;
@@ -178,33 +181,33 @@ const Booking = () => {
   }, []);
 
   const handleDeleteBooking = async (booking) => {
-    const confirmMsg = booking.bulk_id
-      ? "This is a BULK booking. All villas will be deleted. Continue?"
-      : "Are you sure you want to delete this booking?";
+    console.log("Deleting booking:", booking); // 🔍 debug
 
-    if (!window.confirm(confirmMsg)) return;
+    const isBulk = Boolean(booking.bulk_id);
 
-    const url = booking.bulk_id
-      ? `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/bulk/${booking.bulk_id}`
-      : `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/${booking.id}`;
+    const url = isBulk
+      ? `${API_BASE}/api/bookings/bulk/${booking.bulk_id}`
+      : `${API_BASE}/api/bookings/${booking.id}`;
 
-    try {
-      const res = await fetch(url, { method: "DELETE" });
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error(text);
-        alert("Delete failed");
-        return;
-      }
+    if (!window.confirm(
+      isBulk
+        ? "Delete this BULK booking (all villas)?"
+        : "Delete this booking?"
+    )) return;
 
-      alert("Booking deleted");
-      await fetchBookings();
-    } catch (err) {
-      console.error(err);
-      alert("Error deleting booking");
+    const res = await fetch(url, { method: "DELETE" });
+    const body = await res.json();
+
+    if (!res.ok) {
+      alert(body.error || "Delete failed");
+      return;
     }
+
+    alert("Booking deleted");
+    fetchBookings(); // refresh list
   };
+
 
 
   const handleSaveEditedBooking = async (updatedBooking) => {
@@ -427,7 +430,7 @@ const Booking = () => {
                               <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setSelectedBooking(b); setShowEditBooking(true); }}>
                                 <FaEdit />
                               </button>
-                              <button className="btn btn-sm btn-outline-danger px-2 me-1" onClick={() => handleDeleteBooking(b.id)}>
+                              <button className="btn btn-sm btn-outline-danger px-2 me-1" onClick={() => handleDeleteBooking(b)}>
                                 <FaTrash />
                               </button>
                               <button className="btn btn-sm btn-outline-primary px-2 me-1" onClick={() => {
