@@ -443,28 +443,28 @@ export const addBulkBookings = async (req, res) => {
   }
 };
 
-/* Delete bulk booking */
-export const deleteBulkBooking = async (req, res) => {
-  const { bulk_id } = req.params;
+// /* Delete bulk booking */
+// export const deleteBulkBooking = async (req, res) => {
+//   const { bulk_id } = req.params;
 
-  if (!bulk_id) {
-    return res.status(400).json({ error: "Invalid bulk ID" });
-  }
+//   if (!bulk_id) {
+//     return res.status(400).json({ error: "Invalid bulk ID" });
+//   }
 
-  try {
-    const { error } = await supabase
-      .from("bookings")
-      .delete()
-      .eq("bulk_id", bulk_id);
+//   try {
+//     const { error } = await supabase
+//       .from("bookings")
+//       .delete()
+//       .eq("bulk_id", bulk_id);
 
-    if (error) {
-      console.error("Bulk delete error:", error);
-      return res.status(500).json({ error: "Bulk delete failed" });
-    }
+//     if (error) {
+//       console.error("Bulk delete error:", error);
+//       return res.status(500).json({ error: "Bulk delete failed" });
+//     }
 
-    res.status(200).json({ message: "Bulk booking deleted successfully" });
-  } catch (err) {
-    console.error("Bulk delete exception:", err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
+//     res.status(200).json({ message: "Bulk booking deleted successfully" });
+//   } catch (err) {
+//     console.error("Bulk delete exception:", err);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };

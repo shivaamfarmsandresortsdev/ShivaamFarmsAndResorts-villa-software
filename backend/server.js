@@ -32,6 +32,15 @@ app.use("/api/checkins", checkinRoutes);
 // ✅ IMPORTANT — pass supabase client to these route functions
 app.use("/api/revenue", revenueRoutes(supabase));
 app.use("/api/expenses", expenseRoutes(supabase));
+app.get("/__routes_check", (req, res) => {
+  res.json({
+    routes: [
+      "POST /api/bookings",
+      "POST /api/bookings/bulk",
+      "DELETE /api/bookings/bulk/:bulk_id"
+    ]
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
