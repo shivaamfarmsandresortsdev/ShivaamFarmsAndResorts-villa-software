@@ -58,12 +58,40 @@ const Booking = () => {
 
   const [bookings, setBookings] = useState([]);
 
+  const role = localStorage.getItem("role");
+  const isExecutive = role === "executive";
+
   // Filters
-  const filteredBookings = bookings.filter(
+
+  const groupBookings = (bookings) => {
+    const map = new Map();
+
+    bookings.forEach((b) => {
+      const key = b.bulk_id || b.id; // single booking uses its own id
+
+      if (!map.has(key)) {
+        map.set(key, {
+          ...b,
+          villas: [...b.villas],   // start villas array
+        });
+      } else {
+        const existing = map.get(key);
+        existing.villas.push(...b.villas);
+      }
+    });
+
+    return Array.from(map.values());
+  };
+
+  const groupedBookings = groupBookings(bookings);
+
+  const filteredBookings = groupedBookings.filter(
     (b) =>
       (statusFilter === "All Status" || b.status === statusFilter) &&
-      (b.guest.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.villa.toLowerCase().includes(searchQuery.toLowerCase()))
+      (
+        b.guest.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.villas.join(", ").toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
   // Current stats
@@ -74,42 +102,51 @@ const Booking = () => {
     : 0;
 
   // Mock previous month data
-  const prevMonthBookings = 10;
-  const prevMonthGuests = 20;
-  const prevMonthOccupancy = 50;
+  // const prevMonthBookings = 10;
+  // const prevMonthGuests = 20;
+  // const prevMonthOccupancy = 50;
 
   // Growth % calculations
-  const bookingGrowth =
-    prevMonthBookings > 0
-      ? (((totalBookings - prevMonthBookings) / prevMonthBookings) * 100).toFixed(1)
-      : "0";
-  const guestGrowth =
-    prevMonthGuests > 0
-      ? (((currentGuests - prevMonthGuests) / prevMonthGuests) * 100).toFixed(1)
-      : "0";
-  const occupancyGrowth =
-    prevMonthOccupancy > 0
-      ? (((occupancyRate - prevMonthOccupancy) / prevMonthOccupancy) * 100).toFixed(1)
-      : "0";
+  // const bookingGrowth =
+  //   prevMonthBookings > 0
+  //     ? (((totalBookings - prevMonthBookings) / prevMonthBookings) * 100).toFixed(1)
+  //     : "0";
+  // const guestGrowth =
+  //   prevMonthGuests > 0
+  //     ? (((currentGuests - prevMonthGuests) / prevMonthGuests) * 100).toFixed(1)
+  //     : "0";
+  // const occupancyGrowth =
+  //   prevMonthOccupancy > 0
+  //     ? (((occupancyRate - prevMonthOccupancy) / prevMonthOccupancy) * 100).toFixed(1)
+  //     : "0";
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch("https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings");
+      const res = await fetch(
+        "https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings"
+      );
       const json = await res.json();
-
       if (!json.data) return;
 
-      const mappedBookings = json.data.map((b) => ({
-        id: b.id,
+      const normalized = json.data.map((b) => ({
+        id: b.booking_id || b.id,           // 👈 bulk or single
+        bulk_id: b.bulk_id || null,
+
         guest: b.guest,
-        email: b.email,
         phone: b.phone,
-        villa: b.villa,
-        checkIn: b.check_in,
-        checkOut: b.check_out,
+
+        // 👇 normalize villas
+        villas: Array.isArray(b.villas)
+          ? b.villas
+          : [b.villa],
+
+        checkIn: b.check_in || b.checkIn,
+        checkOut: b.check_out || b.checkOut,
         nights: b.nights,
         guests: b.guests,
+
         status: b.status,
+
         base_amount: Number(b.base_amount || 0),
         gst_type: b.gst_type || "",
         cgst_amount: Number(b.cgst_amount || 0),
@@ -119,14 +156,18 @@ const Booking = () => {
         total_amount: Number(b.total_amount || 0),
         advanced_amount: Number(b.advanced_amount || 0),
         remaining_amount: Number(b.remaining_amount || 0),
+
         payment_mode: b.payment_mode,
         payment_category: b.payment_category,
         received_by: b.received_by,
         address: b.address,
-        aadhar: b.aadhar,
       }));
 
-      setBookings(mappedBookings.sort((a, b) => Number(b.id) - Number(a.id)));
+      setBookings(
+        normalized.sort(
+          (a, b) => String(b.id).localeCompare(String(a.id))
+        )
+      );
     } catch (err) {
       console.error("Error fetching bookings:", err);
     }
@@ -136,26 +177,35 @@ const Booking = () => {
     fetchBookings();
   }, []);
 
-  const handleDeleteBooking = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this booking?")) return;
+  const handleDeleteBooking = async (booking) => {
+    const confirmMsg = booking.bulk_id
+      ? "This is a BULK booking. All villas will be deleted. Continue?"
+      : "Are you sure you want to delete this booking?";
+
+    if (!window.confirm(confirmMsg)) return;
+
+    const url = booking.bulk_id
+      ? `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/bulk/${booking.bulk_id}`
+      : `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/${booking.id}`;
 
     try {
-      const res = await fetch(`https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
+      const res = await fetch(url, { method: "DELETE" });
 
-      if (res.ok) {
-        setBookings(bookings.filter((b) => b.id !== id));
-        alert("Booking deleted successfully");
-      } else {
-        alert("Failed to delete booking");
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(text);
+        alert("Delete failed");
+        return;
       }
+
+      alert("Booking deleted");
+      await fetchBookings();
     } catch (err) {
       console.error(err);
       alert("Error deleting booking");
     }
   };
+
 
   const handleSaveEditedBooking = async (updatedBooking) => {
     const bookingId = updatedBooking.id || selectedBooking?.id;
@@ -170,7 +220,7 @@ const Booking = () => {
           body: JSON.stringify(updatedBooking),
         }
       );
-      const result = await response.json();
+      // const result = await response.json();
       if (response.ok) await fetchBookings();
     } catch (error) {
       console.error("Update failed:", error);
@@ -281,21 +331,24 @@ const Booking = () => {
                       <th>Guests</th>
                       <th>Status</th>
                       <th>Received By</th>
-                      <th>Base Amount (₹)</th>
-                      <th>GST Type</th>
-                      <th>CGST (₹)</th>
-                      <th>SGST (₹)</th>
-                      <th>IGST (₹)</th>
-                      <th>GST Total (₹)</th>
-                      <th>Total Amount (₹)</th>
-                      <th>Advance (₹)</th>
-                      <th>Balance</th>
-                      <th>Payment Mode</th>
-                      <th>Payment Category</th>
-                      <th>Customer Payment (₹)</th>
-                      <th>Aadhar</th>
-                      <th>Address</th>
-                      <th>Actions</th>
+                      {!isExecutive && (
+                        <>
+                          <th>Base Amount (₹)</th>
+                          <th>GST Type</th>
+                          <th>CGST (₹)</th>
+                          <th>SGST (₹)</th>
+                          <th>IGST (₹)</th>
+                          <th>GST Total (₹)</th>
+                          <th>Total Amount (₹)</th>
+                          <th>Advance (₹)</th>
+                          <th>Balance</th>
+                          <th>Payment Mode</th>
+                          <th>Payment Category</th>
+                          <th>Customer Payment (₹)</th>
+                          <th>Address</th>
+                          <th>Actions</th>
+                        </>
+                      )}
                     </tr>
                   </thead>
 
@@ -304,12 +357,16 @@ const Booking = () => {
                       <tr key={index}>
                         <td className="text-sm-start text-center">
                           <div className="fw-bold">{b.guest}</div>
-                          <small className="text-muted">{b.email}</small>
+                          {/* <small className="text-muted">{b.email}</small> */}
                         </td>
                         <td>
-                          <div className="d-flex align-items-center justify-content-center">
-                            <FaHome className="me-2 text-warning" size={16} />
-                            <span>{b.villa}</span>
+                          <div className="d-flex flex-column align-items-start">
+                            {b.villas.map((villa, i) => (
+                              <div key={i} className="d-flex align-items-center">
+                                <FaHome className="me-2 text-warning" size={14} />
+                                <span>{villa}</span>
+                              </div>
+                            ))}
                           </div>
                         </td>
                         <td>
@@ -320,47 +377,69 @@ const Booking = () => {
                           <div className="d-flex align-items-center justify-content-center">
                             <FaUserFriends className="me-2 text-primary" size={16} />
                             <span>{b.guests}</span>
+                            {b.bulk_id && (
+                              <span className="badge bg-info ms-2">Bulk</span>
+                            )}
+
                           </div>
                         </td>
                         <td>
                           <span
-                            className={`badge rounded-pill px-3 py-2 ${
-                              b.payment_category === "Total" || Number(b.remaining_amount) === 0
-                                ? "bg-success-subtle text-success"
-                                : b.status === "Pending"
+                            className={`badge rounded-pill px-3 py-2 ${b.payment_category === "Total" || Number(b.remaining_amount) === 0
+                              ? "bg-success-subtle text-success"
+                              : b.status === "Pending"
                                 ? "bg-warning-subtle text-warning"
                                 : "bg-primary-subtle text-primary"
-                            }`}
+                              }`}
                           >
                             {b.payment_category === "Total" || Number(b.remaining_amount) === 0 ? "Confirmed" : b.status}
                           </span>
                         </td>
                         <td>{b.received_by || "-"}</td>
-                        <td>₹ {b.base_amount}</td>
-                        <td>{b.gst_type}</td>
-                        <td>₹ {b.cgst_amount}</td>
-                        <td>₹ {b.sgst_amount}</td>
-                        <td>₹ {b.igst_amount}</td>
-                        <td>₹ {b.gst_amount}</td>
-                        <td>₹ {b.total_amount}</td>
-                        <td>₹ {b.advanced_amount}</td>
-                        <td>{b.payment_category === "Advanced" ? `₹ ${b.remaining_amount || 0}` : b.payment_category === "Total" ? "0" : "-"}</td>
-                        <td>{b.payment_mode || "-"}</td>
-                        <td>{b.payment_category || "-"}</td>
-                        <td>{b.payment_category === "Advanced" ? `₹ ${b.advanced_amount || 0}` : `₹ ${b.total_amount || 0}`}</td>
-                        <td>{b.aadhar}</td>
-                        <td style={{ maxWidth: "200px", whiteSpace: "normal" }}>{b.address}</td>
-                        <td>
-                          <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setSelectedBooking(b); setShowEditBooking(true); }}>
-                            <FaEdit />
-                          </button>
-                          <button className="btn btn-sm btn-outline-danger px-2 me-1" onClick={() => handleDeleteBooking(b.id)}>
-                            <FaTrash />
-                          </button>
-                          <button className="btn btn-sm btn-outline-primary px-2 me-1" onClick={() => setShowInvoice(true)}>
-                            <FaFileCsv />
-                          </button>
-                        </td>
+                        {!isExecutive && (
+                          <>
+                            <td>₹ {b.base_amount}</td>
+                            <td>{b.gst_type}</td>
+                            <td>₹ {b.cgst_amount}</td>
+                            <td>₹ {b.sgst_amount}</td>
+                            <td>₹ {b.igst_amount}</td>
+                            <td>₹ {b.gst_amount}</td>
+                            <td>₹ {b.total_amount}</td>
+                            <td>₹ {b.advanced_amount}</td>
+                            <td>
+                              {b.payment_category === "Advanced"
+                                ? `₹ ${b.remaining_amount || 0}`
+                                : b.payment_category === "Total"
+                                  ? "0"
+                                  : "-"}
+                            </td>
+                            <td>{b.payment_mode || "-"}</td>
+                            <td>{b.payment_category || "-"}</td>
+                            <td>
+                              {b.payment_category === "Advanced"
+                                ? `₹ ${b.advanced_amount || 0}`
+                                : `₹ ${b.total_amount || 0}`}
+                            </td>
+                            <td style={{ maxWidth: "200px", whiteSpace: "normal" }}>
+                              {b.address}
+                            </td>
+                            <td>
+                              <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setSelectedBooking(b); setShowEditBooking(true); }}>
+                                <FaEdit />
+                              </button>
+                              <button className="btn btn-sm btn-outline-danger px-2 me-1" onClick={() => handleDeleteBooking(b.id)}>
+                                <FaTrash />
+                              </button>
+                              <button className="btn btn-sm btn-outline-primary px-2 me-1" onClick={() => {
+                                setSelectedBooking(b);
+                                setShowInvoice(true);
+                              }}
+                              >
+                                <FaFileCsv />
+                              </button>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -371,34 +450,46 @@ const Booking = () => {
             <Calendar
               onDateSelect={(date, villa) => console.log("Selected Date:", date, "Villa:", villa)}
               bookedDatesByVilla={bookings.reduce((acc, b) => {
-                if (!acc[b.villa]) acc[b.villa] = [];
-                if (b.checkIn && b.checkOut) {
-                  const start = new Date(b.checkIn);
-                  const end = new Date(b.checkOut);
-                  const current = new Date(start);
-                  while (current <= end) {
-                    const formatted = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,"0")}-${String(current.getDate()).padStart(2,"0")}`;
-                    acc[b.villa].push(formatted);
-                    current.setDate(current.getDate() + 1);
+                b.villas.forEach((villa) => {
+                  if (!acc[villa]) acc[villa] = [];
+
+                  if (b.checkIn && b.checkOut) {
+                    const start = new Date(b.checkIn);
+                    const end = new Date(b.checkOut);
+                    const current = new Date(start);
+
+                    while (current < end) {
+                      const formatted =
+                        `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
+                      acc[villa].push(formatted);
+                      current.setDate(current.getDate() + 1);
+                    }
                   }
-                }
+                });
+
                 return acc;
               }, {})}
-              villas={["All Villas","Sample Villa","Ishaan Villa","Khetan Villa","Pandhari Villa","Patel Villa","More Villa","Madan Villa","Villa 8","Villa 9","Villa 10"]}
+
+              villas={["All Villas", "Sample Villa", "Khetan Villa", "Madan Villa", "Pandhari Villa", "Dormitory Villa", "Tidke Villa", "Ishan Villa", "Cottage Villa", "Krishna Villa", "Motvani Villa", "Bhatkar villa"]}
               bookedByDate={bookings.reduce((acc, b) => {
                 if (b.checkIn && b.checkOut) {
                   const start = new Date(b.checkIn);
                   const end = new Date(b.checkOut);
                   const current = new Date(start);
-                  while (current <= end) {
-                    const formatted = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,"0")}-${String(current.getDate()).padStart(2,"0")}`;
+
+                  while (current < end) {
+                    const formatted =
+                      `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
+
                     if (!acc[formatted]) acc[formatted] = [];
-                    acc[formatted].push(b.villa);
+                    acc[formatted].push(...b.villas);
+
                     current.setDate(current.getDate() + 1);
                   }
                 }
                 return acc;
               }, {})}
+
             />
           )}
         </div>

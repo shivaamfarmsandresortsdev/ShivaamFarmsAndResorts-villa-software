@@ -2,13 +2,16 @@
 import React, { useState, useEffect } from "react";
 import "./NewBooking.css";
 
+const API_BASE =
+  import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 const NewBooking = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
     guest: "",
-    email: "",
+    // email: "",
     phone: "",
     address: "",
-    aadhar: "",
+    // aadhar: "",
     villa: "Sample Villa",
     checkIn: "",
     checkOut: "",
@@ -27,25 +30,28 @@ const NewBooking = ({ onClose, onSave }) => {
   });
 
   const villaOptions = [
-  "All Villas",
-  "Sample Villa",
-  "Ishaan Villa",
-  "Khetan Villa",
-  "Pandhari Villa",
-  "Patel Villa",
-  "More Villa",
-  "Madan Villa",
-  "Villa 8",
-  "Villa 9",
-  "Villa 10"
-];
+    "All Villas",
+    "Sample Villa",
+    "Khetan Villa",
+    "Madan Villa",
+    "Pandhari Villa",
+    "Dormitory Villa",
+    "Tidke Villa",
+    "Ishan Villa",
+    "Cottage Villa",
+    "Krishna Villa",
+    "Motvani Villa",
+    "Bhatkar villa"
+  ];
 
   const [dateError, setDateError] = useState("");
+  const [bookingMode, setBookingMode] = useState("single");
+  // "single" | "bulk"
 
-  const normalizeAadharInput = (val) => {
-    let digits = String(val).replace(/\D/g, "").slice(0, 12);
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
-  };
+  // const normalizeAadharInput = (val) => {
+  //   let digits = String(val).replace(/\D/g, "").slice(0, 12);
+  //   return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
+  // };
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -108,10 +114,10 @@ const NewBooking = ({ onClose, onSave }) => {
   };
 
   // aadhar special handler
-  const handleAadharChange = (e) => {
-    const formatted = normalizeAadharInput(e.target.value);
-    setFormData((prev) => ({ ...prev, aadhar: formatted }));
-  };
+  // const handleAadharChange = (e) => {
+  //   const formatted = normalizeAadharInput(e.target.value);
+  //   setFormData((prev) => ({ ...prev, aadhar: formatted }));
+  // };
 
   // Recompute total when baseAmount or gstType changes
   useEffect(() => {
@@ -138,9 +144,9 @@ const NewBooking = ({ onClose, onSave }) => {
     e.preventDefault();
 
     if (!formData.guest.trim()) return alert("Enter guest");
-    if (!formData.email.trim()) return alert("Enter email");
-    if (!formData.aadhar || formData.aadhar.replace(/\s/g, "").length !== 12)
-      return alert("Enter 12-digit Aadhar");
+    // if (!formData.email.trim()) return alert("Enter email");
+    // if (!formData.aadhar || formData.aadhar.replace(/\s/g, "").length !== 12)
+    //   return alert("Enter 12-digit Aadhar");
     if (!formData.checkIn || !formData.checkOut) return alert("Select dates");
     if (formData.nights <= 0) return alert("Invalid dates");
     if (!formData.baseAmount || Number(formData.baseAmount) <= 0)
@@ -151,10 +157,10 @@ const NewBooking = ({ onClose, onSave }) => {
 
     const payload = {
       guest: formData.guest.trim(),
-      email: formData.email.trim(),
+      // email: formData.email.trim(),
       phone: formData.phone?.trim() || null,
       address: formData.address?.trim() || null,
-      aadhar: formData.aadhar.replace(/\s/g, ""),
+      // aadhar: formData.aadhar.replace(/\s/g, ""),
       villa: formData.villa,
       checkIn: formData.checkIn,
       checkOut: formData.checkOut,
@@ -174,11 +180,12 @@ const NewBooking = ({ onClose, onSave }) => {
     };
 
     try {
-      const res = await fetch("https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings", {
+      const res = await fetch(`${API_BASE}/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
 
       const body = await res.json();
 
@@ -201,93 +208,345 @@ const NewBooking = ({ onClose, onSave }) => {
     }
   };
 
+  const VillaMultiSelect = ({ options, value, onChange }) => {
+    const [open, setOpen] = useState(false);
+    const ref = React.useRef();
 
-  return (
-    <div className="new-booking-overlay" role="dialog" aria-modal="true">
-      <div className="new-booking-page">
-        <div className="card p-4 shadow">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h5>Create New Booking</h5>
-              <small className="text-muted">Fill details</small>
-            </div>
-            <button className="btn-close" onClick={onClose} aria-label="Close" />
+    // Close when clicking outside
+    React.useEffect(() => {
+      const handleClickOutside = (e) => {
+        if (ref.current && !ref.current.contains(e.target)) {
+          setOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const toggleVilla = (villa) => {
+      if (value.includes(villa)) {
+        onChange(value.filter((v) => v !== villa));
+      } else {
+        onChange([...value, villa]);
+      }
+    };
+
+    return (
+      <div ref={ref} className="position-relative">
+        {/* Input box */}
+        <div
+          className="form-control d-flex justify-content-between align-items-center"
+          style={{ cursor: "pointer" }}
+          onClick={() => setOpen((o) => !o)}
+        >
+          <span className="text-truncate">
+            {value.length ? value.join(", ") : "Select Villas"}
+          </span>
+          <span>▾</span>
+        </div>
+
+        {/* Dropdown */}
+        {open && (
+          <div
+            className="border rounded shadow-sm bg-white mt-1 p-2 position-absolute w-100"
+            style={{ zIndex: 1000, maxHeight: 200, overflowY: "auto" }}
+          >
+            {options.map((villa) => (
+              <div key={villa} className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  checked={value.includes(villa)}
+                  onChange={() => toggleVilla(villa)}
+                  id={`${villa}`}
+                />
+                <label className="form-check-label" htmlFor={`${villa}`}>
+                  {villa}
+                </label>
+              </div>
+            ))}
           </div>
+        )}
+      </div>
+    );
+  };
 
-          <form onSubmit={handleSubmit} className="row g-3">
+
+  const BulkBookingForm = ({ villaOptions, onClose, onSave }) => {
+    const [rows, setRows] = useState([
+      {
+        guest: "",
+        phone: "",
+        villas: ["Sample Villa"],
+
+        checkIn: "",
+        checkOut: "",
+        nights: 0,
+        guests: 1,
+
+        baseAmount: "",
+        gstType: "",
+        totalAmount: 0,
+
+        paymentCategory: "Total",
+        advancedAmount: 0,
+        remainingAmount: 0,
+
+        paymentMode: "",
+        receivedBy: "",
+        status: "Pending",
+      },
+    ]);
+
+    const today = new Date().toISOString().split("T")[0];
+
+    /* ---- SAME LOGIC AS SINGLE BOOKING ---- */
+    const recalcRow = (row) => {
+      // -------- Nights auto-calc (same as single booking) --------
+      if (row.checkIn && row.checkOut) {
+        const d1 = new Date(row.checkIn);
+        const d2 = new Date(row.checkOut);
+
+        if (!isNaN(d1) && !isNaN(d2) && d2 > d1) {
+          row.nights = Math.round(
+            (d2 - d1) / (1000 * 60 * 60 * 24)
+          );
+        } else {
+          row.nights = 0;
+        }
+      } else {
+        row.nights = 0;
+      }
+
+      // -------- Amount calculation --------
+      const base = Number(row.baseAmount || 0);
+      if (!base || !row.gstType) {
+        row.totalAmount = 0;
+        row.remainingAmount = 0;
+        return;
+      }
+
+      const gst = +(base * 0.18).toFixed(2);
+      const total = +(base + gst).toFixed(2);
+      row.totalAmount = total;
+
+      if (row.paymentCategory === "Advanced") {
+        row.remainingAmount = Math.max(
+          total - Number(row.advancedAmount || 0),
+          0
+        );
+      } else {
+        row.advancedAmount = 0;
+        row.remainingAmount = 0;
+      }
+    };
+
+    const updateRow = (index, field, value) => {
+      const updated = [...rows];
+
+      updated[index][field] =
+        ["baseAmount", "advancedAmount", "guests"].includes(field)
+          ? Number(value)
+          : value;
+
+      // 🔥 Trigger recalculation for date & amount fields
+      if (
+        [
+          "checkIn",
+          "checkOut",
+          "baseAmount",
+          "gstType",
+          "paymentCategory",
+          "advancedAmount",
+        ].includes(field)
+      ) {
+        recalcRow(updated[index]);
+      }
+
+      setRows(updated);
+    };
+
+    // const addRow = () => {
+    //   setRows([...rows, { ...rows[0], guest: "", phone: "" }]);
+    // };
+
+    // const removeRow = (i) => {
+    //   setRows(rows.filter((_, idx) => idx !== i));
+    // };
+
+    const handleBulkSubmit = async () => {
+      const expandedBookings = [];
+
+      for (const r of rows) {
+        if (
+          !r.guest ||
+          !r.villas.length ||
+          !r.checkIn ||
+          !r.checkOut ||
+          r.nights <= 0 ||
+          !r.baseAmount ||
+          !r.gstType ||
+          !r.paymentMode ||
+          !r.receivedBy
+        ) {
+          alert("Please fill all required fields");
+          return;
+        }
+
+        // 🔥 CREATE ONE BOOKING PER VILLA
+        r.villas.forEach((villa) => {
+          expandedBookings.push({
+            guest: r.guest,
+            phone: r.phone || null,
+            villa, // ✅ SINGLE villa string
+
+            checkIn: r.checkIn,
+            checkOut: r.checkOut,
+            nights: r.nights,
+            guests: r.guests,
+
+            baseAmount: r.baseAmount,
+            gstType: r.gstType,
+            paymentCategory: r.paymentCategory,
+            advancedAmount:
+              r.paymentCategory === "Advanced" ? r.advancedAmount : 0,
+            paymentMode: r.paymentMode,
+            receivedBy: r.receivedBy,
+            status: r.status,
+          });
+        });
+      }
+
+      const res = await fetch(`${API_BASE}/api/bookings/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookings: expandedBookings }),
+      });
+
+      const text = await res.text();
+
+      let body;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        console.error("Non-JSON response:", text);
+        alert("Server error");
+        return;
+      }
+
+      if (!res.ok) {
+        alert(body.error || "Bulk booking failed");
+        return;
+      }
+
+      await onSave(body.data);
+      onClose();
+
+    };
+
+    return (
+      <>
+        {rows.map((row, index) => (
+          <div key={index} className="row g-3 mb-4">
+
             <div className="col-12 col-sm-6">
               <label>Guest Name</label>
-              <input name="guest" value={formData.guest} onChange={handleChange} className="form-control" />
+              <input
+                className="form-control"
+                value={row.guest}
+                onChange={(e) => updateRow(index, "guest", e.target.value)}
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>Villa</label>
-              <select
-  name="villa"
-  value={formData.villa}
-  onChange={handleChange}
-  className="form-select"
->
-  {villaOptions.map((villa, index) => (
-    <option key={index} value={villa}>
-      {villa}
-    </option>
-  ))}
-</select>
-
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Email</label>
-              <input name="email" type="email" value={formData.email} onChange={handleChange} className="form-control" />
+              <VillaMultiSelect
+                options={villaOptions.filter(v => v !== "All Villas")}
+                value={row.villas}
+                onChange={(v) => updateRow(index, "villas", v)}
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>Phone</label>
-              <input name="phone" value={formData.phone} onChange={handleChange} className="form-control" />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Address</label>
-              <textarea name="address" value={formData.address} onChange={handleChange} className="form-control" rows="2" />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Aadhar</label>
-              <input name="aadhar" value={formData.aadhar} onChange={handleAadharChange} className="form-control" maxLength={14} />
-              {formData.aadhar && formData.aadhar.replace(/\s/g, "").length !== 12 && (
-                <small className="text-danger">Aadhar must be 12 digits</small>
-              )}
+              <input
+                className="form-control"
+                value={row.phone}
+                onChange={(e) => updateRow(index, "phone", e.target.value)}
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>Check-in</label>
-              <input name="checkIn" type="date" value={formData.checkIn} onChange={handleChange} className="form-control" min={new Date().toISOString().split("T")[0]} />
+              <input
+                type="date"
+                className="form-control"
+                value={row.checkIn}
+                min={today}
+                onChange={(e) =>
+                  updateRow(index, "checkIn", e.target.value)
+                }
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>Check-out</label>
-              <input name="checkOut" type="date" value={formData.checkOut} onChange={handleChange} className="form-control" min={formData.checkIn ? new Date(new Date(formData.checkIn).getTime() + 86400000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]} />
+              <input
+                type="date"
+                className="form-control"
+                value={row.checkOut}
+                min={
+                  row.checkIn
+                    ? new Date(
+                      new Date(row.checkIn).getTime() + 86400000
+                    )
+                      .toISOString()
+                      .split("T")[0]
+                    : today
+                }
+                onChange={(e) =>
+                  updateRow(index, "checkOut", e.target.value)
+                }
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>Nights</label>
-              <input value={formData.nights ? `${formData.nights} nights` : ""} readOnly className="form-control" />
+              <input
+                className="form-control"
+                value={row.nights ? `${row.nights} nights` : ""}
+                readOnly
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>Guests</label>
-              <input name="guests" type="number" min="1" value={formData.guests} onChange={handleChange} className="form-control" />
+              <input
+                type="number"
+                min="1"
+                className="form-control"
+                value={row.guests}
+                onChange={(e) => updateRow(index, "guests", e.target.value)}
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>Base Amount (₹)</label>
-              <input name="baseAmount" type="number" value={formData.baseAmount} onChange={handleChange} className="form-control" />
+              <input
+                type="number"
+                className="form-control"
+                value={row.baseAmount}
+                onChange={(e) => updateRow(index, "baseAmount", e.target.value)}
+              />
             </div>
 
             <div className="col-12 col-sm-6">
               <label>GST Type</label>
-              <select name="gstType" value={formData.gstType} onChange={handleChange} className="form-select">
+              <select
+                className="form-select"
+                value={row.gstType}
+                onChange={(e) => updateRow(index, "gstType", e.target.value)}
+              >
                 <option value="">Select</option>
                 <option value="CGST + SGST (9% + 9%)">CGST + SGST (9% + 9%)</option>
                 <option value="IGST (18%)">IGST (18%)</option>
@@ -296,7 +555,11 @@ const NewBooking = ({ onClose, onSave }) => {
 
             <div className="col-12 col-sm-6">
               <label>Payment Mode</label>
-              <select name="paymentMode" value={formData.paymentMode} onChange={handleChange} className="form-select">
+              <select
+                className="form-select"
+                value={row.paymentMode}
+                onChange={(e) => updateRow(index, "paymentMode", e.target.value)}
+              >
                 <option value="">Select</option>
                 <option value="Cash">Cash</option>
                 <option value="Online">Online</option>
@@ -306,63 +569,288 @@ const NewBooking = ({ onClose, onSave }) => {
             <div className="col-12 col-sm-6">
               <label>Payment Category</label>
               <div>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="radio" id="pcTotal" name="paymentCategory" value="Total" checked={formData.paymentCategory === "Total"} onChange={handleChange} />
-                  <label className="form-check-label" htmlFor="pcTotal">Total</label>
-                </div>
-                <div className="form-check form-check-inline">
-                  <input className="form-check-input" type="radio" id="pcAdv" name="paymentCategory" value="Advanced" checked={formData.paymentCategory === "Advanced"} onChange={handleChange} />
-                  <label className="form-check-label" htmlFor="pcAdv">Advanced</label>
-                </div>
+                <input
+                  type="radio"
+                  checked={row.paymentCategory === "Total"}
+                  onChange={() => updateRow(index, "paymentCategory", "Total")}
+                />{" "}
+                Total
+                <input
+                  type="radio"
+                  className="ms-3"
+                  checked={row.paymentCategory === "Advanced"}
+                  onChange={() => updateRow(index, "paymentCategory", "Advanced")}
+                />{" "}
+                Advanced
               </div>
             </div>
-            
-<div className="col-12 col-sm-6">
-  <label>Customer Payment (₹)</label>
-  <input
-    value={
-      formData.paymentCategory === "Advanced"
-        ? formData.advancedAmount
-        : formData.totalAmount
-    }
-    readOnly
-    className="form-control"
-  />
-</div>
+
+            <div className="col-12 col-sm-6">
+              <label>Customer Payment (₹)</label>
+              <input
+                className="form-control"
+                value={
+                  row.paymentCategory === "Advanced"
+                    ? row.advancedAmount
+                    : row.totalAmount
+                }
+                readOnly
+              />
+            </div>
 
 
+            <div className="col-12 col-sm-6">
+              <label>Total Amount</label>
+              <input className="form-control" value={row.totalAmount} readOnly />
+            </div>
 
-            {formData.paymentCategory === "Advanced" && (
+            {row.paymentCategory === "Advanced" && (
               <>
                 <div className="col-12 col-sm-6">
-                  <label>Advanced Amount (₹)</label>
-                  <input name="advancedAmount" type="number" value={formData.advancedAmount} onChange={handleChange} className="form-control" />
+                  <label>Advanced Amount</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={row.advancedAmount}
+                    onChange={(e) =>
+                      updateRow(index, "advancedAmount", e.target.value)
+                    }
+                  />
                 </div>
 
                 <div className="col-12 col-sm-6">
-                  <label>Remaining (₹)</label>
-                  <input value={formData.remainingAmount} readOnly className="form-control" />
+                  <label>Remaining</label>
+                  <input className="form-control" value={row.remainingAmount} readOnly />
                 </div>
               </>
             )}
 
             <div className="col-12 col-sm-6">
-              <label>Total Amount (auto)</label>
-              <input value={formData.totalAmount} readOnly className="form-control" />
-            </div>
-
-            <div className="col-12 col-sm-6">
               <label>Received By</label>
-              <input name="receivedBy" value={formData.receivedBy} onChange={handleChange} className="form-control" />
+              <input
+                className="form-control"
+                value={row.receivedBy}
+                onChange={(e) => updateRow(index, "receivedBy", e.target.value)}
+              />
             </div>
 
-            {dateError && <div className="col-12"><small className="text-danger">{dateError}</small></div>}
-
-            <div className="col-12 d-flex justify-content-end gap-2">
-              <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Cancel</button>
-              <button type="submit" className="btn btn-success">Create Booking</button>
+            <div className="col-12 d-flex justify-content-between">
+              {/* <button
+              type="button"
+              className="btn btn-outline-danger"
+              onClick={() => removeRow(index)}
+            >
+              Remove
+            </button> */}
             </div>
-          </form>
+          </div>
+        ))}
+
+        <div className="col-12 d-flex justify-content-end gap-2">
+          {/* <button className="btn btn-outline-primary" onClick={addRow}>
+          ➕ Add Row
+        </button> */}
+          <button
+            type="button"
+            className="btn btn-success"
+            onClick={handleBulkSubmit}
+          >
+            Create Bulk Bookings
+          </button>
+
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <div className="new-booking-overlay" role="dialog" aria-modal="true">
+      <div className="new-booking-page">
+        <div className="card p-4 shadow">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5>Create New Booking</h5>
+              <small className="text-muted">
+                {bookingMode === "single" ? "Single booking" : "Bulk booking"}
+              </small>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <div className="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  className={`btn ${bookingMode === "single" ? "btn-success" : "btn-outline-success"}`}
+                  onClick={() => setBookingMode("single")}
+                >
+                  Single
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${bookingMode === "bulk" ? "btn-success" : "btn-outline-success"}`}
+                  onClick={() => setBookingMode("bulk")}
+                >
+                  Bulk
+                </button>
+              </div>
+              <button className="btn-close" onClick={onClose} />
+            </div>
+          </div>
+
+          {bookingMode === "single" ? (
+            <form onSubmit={handleSubmit} className="row g-3">
+              <div className="col-12 col-sm-6">
+                <label>Guest Name</label>
+                <input name="guest" value={formData.guest} onChange={handleChange} className="form-control" />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Villa</label>
+                <select
+                  name="villa"
+                  value={formData.villa}
+                  onChange={handleChange}
+                  className="form-select"
+                >
+                  {villaOptions.map((villa, index) => (
+                    <option key={index} value={villa}>
+                      {villa}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* <div className="col-12 col-sm-6">
+              <label>Email</label>
+              <input name="email" type="email" value={formData.email} onChange={handleChange} className="form-control" />
+            </div> */}
+
+              <div className="col-12 col-sm-6">
+                <label>Phone</label>
+                <input name="phone" value={formData.phone} onChange={handleChange} className="form-control" />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Address</label>
+                <textarea name="address" value={formData.address} onChange={handleChange} className="form-control" rows="2" />
+              </div>
+
+              {/* <div className="col-12 col-sm-6">
+              <label>Aadhar</label>
+              <input name="aadhar" value={formData.aadhar} onChange={handleAadharChange} className="form-control" maxLength={14} />
+              {formData.aadhar && formData.aadhar.replace(/\s/g, "").length !== 12 && (
+                <small className="text-danger">Aadhar must be 12 digits</small>
+              )}
+            </div> */}
+
+              <div className="col-12 col-sm-6">
+                <label>Check-in</label>
+                <input name="checkIn" type="date" value={formData.checkIn} onChange={handleChange} className="form-control" min={new Date().toISOString().split("T")[0]} />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Check-out</label>
+                <input name="checkOut" type="date" value={formData.checkOut} onChange={handleChange} className="form-control" min={formData.checkIn ? new Date(new Date(formData.checkIn).getTime() + 86400000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]} />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Nights</label>
+                <input value={formData.nights ? `${formData.nights} nights` : ""} readOnly className="form-control" />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Guests</label>
+                <input name="guests" type="number" min="1" value={formData.guests} onChange={handleChange} className="form-control" />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Base Amount (₹)</label>
+                <input name="baseAmount" type="number" value={formData.baseAmount} onChange={handleChange} className="form-control" />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>GST Type</label>
+                <select name="gstType" value={formData.gstType} onChange={handleChange} className="form-select">
+                  <option value="">Select</option>
+                  <option value="CGST + SGST (9% + 9%)">CGST + SGST (9% + 9%)</option>
+                  <option value="IGST (18%)">IGST (18%)</option>
+                </select>
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Payment Mode</label>
+                <select name="paymentMode" value={formData.paymentMode} onChange={handleChange} className="form-select">
+                  <option value="">Select</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Online">Online</option>
+                </select>
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Payment Category</label>
+                <div>
+                  <div className="form-check form-check-inline">
+                    <input className="form-check-input" type="radio" id="pcTotal" name="paymentCategory" value="Total" checked={formData.paymentCategory === "Total"} onChange={handleChange} />
+                    <label className="form-check-label" htmlFor="pcTotal">Total</label>
+                  </div>
+                  <div className="form-check form-check-inline">
+                    <input className="form-check-input" type="radio" id="pcAdv" name="paymentCategory" value="Advanced" checked={formData.paymentCategory === "Advanced"} onChange={handleChange} />
+                    <label className="form-check-label" htmlFor="pcAdv">Advanced</label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Customer Payment (₹)</label>
+                <input
+                  value={
+                    formData.paymentCategory === "Advanced"
+                      ? formData.advancedAmount
+                      : formData.totalAmount
+                  }
+                  readOnly
+                  className="form-control"
+                />
+              </div>
+
+
+
+              {formData.paymentCategory === "Advanced" && (
+                <>
+                  <div className="col-12 col-sm-6">
+                    <label>Advanced Amount (₹)</label>
+                    <input name="advancedAmount" type="number" value={formData.advancedAmount} onChange={handleChange} className="form-control" />
+                  </div>
+
+                  <div className="col-12 col-sm-6">
+                    <label>Remaining (₹)</label>
+                    <input value={formData.remainingAmount} readOnly className="form-control" />
+                  </div>
+                </>
+              )}
+
+              <div className="col-12 col-sm-6">
+                <label>Total Amount (auto)</label>
+                <input value={formData.totalAmount} readOnly className="form-control" />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Received By</label>
+                <input name="receivedBy" value={formData.receivedBy} onChange={handleChange} className="form-control" />
+              </div>
+
+              {dateError && <div className="col-12"><small className="text-danger">{dateError}</small></div>}
+
+              <div className="col-12 d-flex justify-content-end gap-2">
+                <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Cancel</button>
+                <button type="submit" className="btn btn-success">Create Booking</button>
+              </div>
+            </form>
+          ) : (
+            <BulkBookingForm
+              villaOptions={villaOptions}
+              onClose={onClose}
+              onSave={onSave}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,9 @@
 import express from "express";
 import {
   addBooking,
+  addBulkBookings,
   getAllBookings,
+  deleteBulkBooking,
   deleteBooking,
   generateInvoice,
   getBookedDates,
@@ -13,6 +15,8 @@ const router = express.Router();
 
 // Create
 router.post("/", addBooking);
+
+router.post("/bulk", addBulkBookings);
 
 // Read all
 router.get("/", getAllBookings);
@@ -30,6 +34,7 @@ router.get("/villa/:villa", getBookingsByVilla);
 router.put("/:id", updateBooking);
 
 // Delete
+router.delete("/bulk/:bulk_id", deleteBulkBooking);
 router.delete("/:id", deleteBooking);
 
 export default router;

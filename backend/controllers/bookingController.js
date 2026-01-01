@@ -1,4 +1,5 @@
 // controllers/bookingController.js
+import { supabase } from "../config/supabaseClient.js";
 import {
   insertBooking,
   fetchAllBookings,
@@ -6,6 +7,7 @@ import {
   getBookingById,
   updateBookingById,
 } from "../models/bookingModel.js";
+import { randomUUID } from "crypto";
 
 const normalizeIncoming = (src = {}) => {
   return {
@@ -149,24 +151,44 @@ export const addBooking = async (req, res) => {
 /* Get all bookings */
 export const getAllBookings = async (req, res) => {
   try {
-    const { checked_in } = req.query;
+    const { data, error } = await fetchAllBookings();
+    if (error) throw error;
 
-    let { data, error } = await fetchAllBookings();
-    if (error) {
-      console.log("Supabase error:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    const grouped = Object.values(
+      data.reduce((acc, b) => {
+        const key = b.bulk_id || `single-${b.id}`; // 🔥 CRITICAL
+
+        if (!acc[key]) {
+          acc[key] = {
+            booking_id: key,
+            bulk_id: b.bulk_id || null,
+            guest: b.guest,
+            phone: b.phone,
+            checkIn: b.check_in,
+            checkOut: b.check_out,
+            nights: b.nights,
+            guests: b.guests,
+            villas: [],
+            totalAmount: 0,
+            status: b.status,
+            paymentMode: b.payment_mode,
+            receivedBy: b.received_by,
+            created_at: b.created_at,
+          };
+        }
+
+        acc[key].villas.push(b.villa);
+        acc[key].totalAmount += Number(b.total_amount || 0);
+
+        return acc;
+      }, {})
+    );
 
 
-    // filter server-side (already all data returned by model)
-    if (checked_in === "false") {
-      data = data.filter((b) => !b.checked_in);
-    }
-
-    res.status(200).json({ data });
+    res.status(200).json({ data: grouped });
   } catch (err) {
-    console.error("Fetch error:", err.message || err);
-    res.status(500).json({ error: err.message || "Server error" });
+    console.error("Fetch bookings error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -330,6 +352,119 @@ export const getBookingsByVilla = async (req, res) => {
     res.status(200).json({ data });
   } catch (err) {
     console.error("getBookingsByVilla error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/* Bulk create bookings */
+/* Bulk create bookings */
+export const addBulkBookings = async (req, res) => {
+  try {
+    const { bookings } = req.body;
+
+    if (!Array.isArray(bookings) || bookings.length === 0) {
+      return res.status(400).json({ error: "Invalid bookings array" });
+    }
+
+    const bulk_id = randomUUID();
+
+    const rows = bookings.map((b) => {
+      // GST calculation
+      const base = Number(b.baseAmount || 0);
+      let gstRate = 0;
+
+      if (b.gstType === "IGST (18%)") gstRate = 0.18;
+      if (b.gstType === "CGST + SGST (9% + 9%)") gstRate = 0.18;
+
+      const gstAmount = +(base * gstRate).toFixed(2);
+
+      let cgst = 0, sgst = 0, igst = 0;
+      if (b.gstType === "CGST + SGST (9% + 9%)") {
+        cgst = +(gstAmount / 2).toFixed(2);
+        sgst = +(gstAmount / 2).toFixed(2);
+      } else if (b.gstType === "IGST (18%)") {
+        igst = gstAmount;
+      }
+
+      const total = +(base + gstAmount).toFixed(2);
+      const advance = Number(b.advancedAmount || 0);
+      const remaining =
+        b.paymentCategory === "Advanced"
+          ? Math.max(total - advance, 0)
+          : 0;
+
+      return {
+        bulk_id,
+
+        guest: b.guest,
+        phone: b.phone || null,
+        villa: b.villa,
+
+        check_in: b.checkIn,
+        check_out: b.checkOut,
+        nights: b.nights,
+        guests: b.guests,
+
+        base_amount: base,
+        gst_type: b.gstType,
+        gst_amount: gstAmount,
+        cgst_amount: cgst,
+        sgst_amount: sgst,
+        igst_amount: igst,
+        total_amount: total,
+        advanced_amount: advance,
+        remaining_amount: remaining,
+
+        payment_mode: b.paymentMode,
+        payment_category: b.paymentCategory,
+        received_by: b.receivedBy,
+
+        status:
+          b.paymentCategory === "Total" || remaining === 0
+            ? "Confirmed"
+            : "Pending",
+      };
+    });
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .insert(rows)
+      .select();
+
+    if (error) {
+      console.error("Supabase bulk error:", error);
+      throw error;
+    }
+
+    res.status(200).json({ data });
+  } catch (err) {
+    console.error("Bulk insert failed:", err.message || err);
+    res.status(500).json({ error: err.message || "Bulk booking failed" });
+  }
+};
+
+/* Delete bulk booking */
+export const deleteBulkBooking = async (req, res) => {
+  const { bulk_id } = req.params;
+
+  if (!bulk_id) {
+    return res.status(400).json({ error: "Invalid bulk ID" });
+  }
+
+  try {
+    const { error } = await supabase
+      .from("bookings")
+      .delete()
+      .eq("bulk_id", bulk_id);
+
+    if (error) {
+      console.error("Bulk delete error:", error);
+      return res.status(500).json({ error: "Bulk delete failed" });
+    }
+
+    res.status(200).json({ message: "Bulk booking deleted successfully" });
+  } catch (err) {
+    console.error("Bulk delete exception:", err);
     res.status(500).json({ error: "Server error" });
   }
 };

@@ -5,6 +5,13 @@ import "./Invoice.css";
 const Invoice = ({ booking, onClose }) => {
   if (!booking) return null;
 
+  // 🔥 Normalize for single vs bulk booking
+  const villas = Array.isArray(booking.villas)
+    ? booking.villas
+    : booking.villa
+      ? [booking.villa]
+      : [];
+
   const company = {
     name: "SHIVAAM FARMS & RESORTS",
     address: "01, AB, Green Planet , Omkar Nagar",
@@ -33,8 +40,8 @@ const Invoice = ({ booking, onClose }) => {
   const gstRows = getGSTRows();
 
   // ------------------------- PDF DOWNLOAD -------------------------
-  const handleDownload = () => {
-    const doc = new jsPDF("p", "mm", "a4");
+  const handleDownload = (doc = null, silent = false) => {
+    if (!doc) doc = new jsPDF("p", "mm", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
 
     /* ---------------- WATERMARK ---------------- */
@@ -74,30 +81,42 @@ const Invoice = ({ booking, onClose }) => {
     y += 7;
     doc.text(`Guest: ${booking.guest}`, 15, y);
     y += 6;
-    doc.text(`Email: ${booking.email}`, 15, y);
-    y += 6;
+    // doc.text(`Email: ${booking.email}`, 15, y);
+    // y += 6;
     doc.text(`Phone: ${booking.phone || "-"}`, 15, y);
     y += 6;
-    doc.text(`Villa: ${booking.villa}`, 15, y);
+    doc.text(`Villas:`, 15, y);
+    y += 6;
+    villas.forEach((v) => {
+      doc.text(`• ${v}`, 18, y);
+      y += 5;
+    });
 
     /* ---------------- ITEM TABLE ---------------- */
     y += 12;
-
     doc.setFont("helvetica", "bold");
     doc.setFillColor(212, 237, 218); // table-success color
     doc.rect(15, y, pageWidth - 30, 8, "F");
     doc.text("Description", 20, y + 6);
-    doc.text("Rate (₹)", 100, y + 6);
+    doc.text("Rate (Rs.)", 100, y + 6);
     doc.text("Qty", 140, y + 6);
-    doc.text("Subtotal (₹)", 165, y + 6);
+    doc.text("Subtotal (Rs.)", 165, y + 6);
 
     /* item row */
     y += 14;
-    doc.setFont("helvetica", "normal");
-    doc.text(booking.villa, 20, y);
-    doc.text(`${booking.base_amount}`, 105, y);
-    doc.text("1", 142, y);
-    doc.text(`${booking.base_amount}`, 170, y);
+    // doc.setFont("helvetica", "normal");
+    // doc.text(booking.villa, 20, y);
+    // doc.text(`Rs. ${booking.base_amount}`, 105, y);;
+    // doc.text("1", 142, y);
+    // doc.text(`Rs. ${booking.base_amount}`, 170, y);
+
+    villas.forEach((villa) => {
+      doc.text(villa, 20, y);
+      doc.text(`Rs. ${booking.base_amount}`, 105, y);
+      doc.text("1", 142, y);
+      doc.text(`Rs. ${booking.base_amount}`, 170, y);
+      y += 8;
+    });
 
     /* ---------------- GST TABLE ---------------- */
     y += 15;
@@ -112,7 +131,7 @@ const Invoice = ({ booking, onClose }) => {
     doc.setFillColor(255, 245, 204); // table-warning color
     doc.rect(15, y, pageWidth - 30, 8, "F");
     doc.text("Tax Type", 20, y + 6);
-    doc.text("Amount (₹)", 165, y + 6);
+    doc.text("Amount (Rs.)", 165, y + 6);
 
     y += 14;
     doc.setFont("helvetica", "normal");
@@ -121,7 +140,7 @@ const Invoice = ({ booking, onClose }) => {
     const rows = getGSTRows();
     rows.forEach((r) => {
       doc.text(r.label, 20, y);
-      doc.text(`₹${Number(r.value).toFixed(2)}`, 170, y); // Added '₹' and toFixed(2)
+      doc.text(`Rs. ${Number(r.value).toFixed(2)}`, 170, y); // Added '₹' and toFixed(2)
       y += 8;
     });
 
@@ -130,7 +149,7 @@ const Invoice = ({ booking, onClose }) => {
     doc.setFillColor(220, 237, 247); // A light blue color for Grand Total row
     doc.rect(15, y, pageWidth - 30, 8, "F");
     doc.text("Grand Total", 20, y + 6);
-    doc.text(`₹${Number(booking.total_amount).toFixed(2)}`, 170, y + 6); // Use toFixed(2) for consistency
+    doc.text(`Rs. ${Number(booking.total_amount).toFixed(2)}`, 170, y + 6); // Use toFixed(2) for consistency
 
     /* ---------------- PAYMENT DETAILS ---------------- */
     y += 16;
@@ -140,7 +159,7 @@ const Invoice = ({ booking, onClose }) => {
     doc.text(`Received By: ${booking.received_by}`, 15, y);
     // Removed Remaining amount line as it is not in the image.
     // y += 6;
-    // doc.text(`Remaining: ₹ ${booking.remaining_amount}`, 15, y); 
+    // doc.text(`Remaining: Rs. ${booking.remaining_amount}`, 15, y); 
 
     /* ---------------- TERMS ---------------- */
     y += 12;
@@ -149,12 +168,18 @@ const Invoice = ({ booking, onClose }) => {
 
     doc.setFont("helvetica", "normal");
     y += 6;
-    doc.text(
-      "For security, 5 member Aadhar cards are required during check-in. They will be returned during check-out.",
-      15,
-      y,
-      { maxWidth: 180 }
-    );
+    const terms = [
+      // "For security, 5 member Aadhar cards are required during check-in. They will be returned during check-out.",
+      "1. Check-in time is 1:00 PM and check-out time is 11:00 AM. Early check-in or late check-out is subject to availability and may incur additional charges.",
+      "2. Guests are responsible for any damage caused to villa property, furniture, fixtures, or electrical appliances during their stay.",
+      "3. Outside food delivery is strictly prohibited unless written permission is granted by management.",
+      "4. Loud music is not allowed after 10:00 PM as per local regulations. Guests must maintain decorum and avoid disturbing other residents.",
+      "5. Pool usage is at the guest’s own risk. Children must be accompanied by adults at all times.",
+      "6. Management is not responsible for loss of personal belongings, valuables, or unattended items."
+    ];
+
+    doc.text(terms, 15, y, { maxWidth: 180 });
+
 
     /* ---------------- FOOTER ---------------- */
     doc.setFont("helvetica", "bold");
@@ -162,10 +187,80 @@ const Invoice = ({ booking, onClose }) => {
     doc.text("Thank you for visiting!", pageWidth / 2, 290, { align: "center" });
 
     /* SAVE */
-    doc.save(`Invoice_${booking.guest}_${booking.villa}.pdf`);
+    if (!silent) {
+      doc.save(`Invoice_${booking.guest}_${villas.length}_Villas.pdf`);
+    }
+    return doc;
+
   };
 
+  // ------------------------- SHARE VIA WHATSAPP -------------------------
+  const handleShareWhatsApp = async () => {
+    try {
+      // 1️⃣ Validate phone number
+      if (!booking.phone) {
+        alert("No phone number found for this booking");
+        return;
+      }
 
+      // WhatsApp requires digits only + country code
+      const phone = booking.phone.replace(/\D/g, "");
+
+      if (phone.length < 10) {
+        alert("Invalid phone number");
+        return;
+      }
+
+      // 2️⃣ Generate invoice (backend)
+      const res = await fetch(
+        `/api/bookings/send-invoice/${booking.id}`,
+        { method: "POST" }
+      );
+
+
+      if (!res.ok) {
+        throw new Error("Backend error");
+      }
+
+      const { publicUrl } = await res.json();
+
+      if (!publicUrl) {
+        alert("Failed to generate invoice link");
+        return;
+      }
+
+      // 3️⃣ Format dates nicely
+      const formatDate = (d) =>
+        new Date(d).toLocaleDateString("en-IN");
+
+      // 4️⃣ WhatsApp message with invoice summary
+      const message = `
+🧾 Booking Invoice
+━━━━━━━━━━━━━━
+👤 Guest: ${booking.guest}
+🏡 Villas:
+${villas.map(v => `• ${v}`).join("\n")}
+📅 Check-in: ${formatDate(booking.checkIn)}
+📅 Check-out: ${formatDate(booking.checkOut)}
+💰 Amount: ₹${Number(booking.total_amount).toFixed(2)}
+
+📎 Download Invoice:
+${publicUrl}
+
+Thank you for booking with Shivaam Farms & Resorts 🌿
+    `.trim();
+
+      // 5️⃣ Open WhatsApp to BOOKING NUMBER
+      window.open(
+        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+
+    } catch (err) {
+      console.error("WhatsApp share failed:", err);
+      alert("Error sharing invoice on WhatsApp");
+    }
+  };
 
   return (
     <div className="invoice-overlay">
@@ -180,16 +275,19 @@ const Invoice = ({ booking, onClose }) => {
           {company.name}
         </h5>
         <p className="text-center small text-muted mb-3">
-          {company.address} | {company.phone} | {company.email}
+          {company.address} | {company.phone}
         </p>
 
         {/* GUEST + BOOKING DETAILS */}
         <div className="row mb-3">
           <div className="col-md-6">
             <p><strong>Guest:</strong> {booking.guest}</p>
-            <p><strong>Email:</strong> {booking.email}</p>
+            {/* <p><strong>Email:</strong> {booking.email}</p> */}
             <p><strong>Phone:</strong> {booking.phone || "-"}</p>
-            <p><strong>Villa:</strong> {booking.villa}</p>
+            <p><strong>Villas:</strong></p>
+            {villas.map((v, i) => (
+              <div key={i}>🏠 {v}</div>
+            ))}
           </div>
 
           <div className="col-md-6 text-md-end">
@@ -250,15 +348,42 @@ const Invoice = ({ booking, onClose }) => {
         {/* TERMS */}
         <div className="mt-4 small">
           <p className="fw-bold">Terms and Conditions:</p>
-          <p>For security, 5 member Aadhar cards are required during check-in. They will be returned during check-out.</p>
+
+          {/* <p>For security, 5 member Aadhar cards are required during check-in. They will be returned during check-out.</p> */}
+
+          <p>Check-in time is 1:00 PM and check-out time is 11:00 AM. Early check-in or late check-out is subject to availability and may incur additional charges.</p>
+
+          <p>Guests are responsible for any damage caused to villa property, furniture, fixtures, or electrical appliances during their stay.</p>
+
+          <p>Outside food delivery is strictly prohibited unless written permission is granted by management.</p>
+
+          <p>Loud music is not allowed after 10:00 PM as per local regulations. Guests must maintain decorum and avoid disturbing other residents.</p>
+
+          <p>Pool usage is at the guest’s own risk. Children must be accompanied by adults at all times.</p>
+
+          <p>Management is not responsible for loss of personal belongings, valuables, or unattended items.</p>
         </div>
+
 
         {/* DOWNLOAD BUTTON */}
         <div className="text-center mt-4">
-          <button className="btn btn-success" onClick={handleDownload}>
+          <button
+            className="btn btn-success"
+            onClick={() => {
+              console.log("DOWNLOAD BUTTON CLICKED");
+              handleDownload();
+            }}
+          >
             ⬇️ Download Invoice
           </button>
+
         </div>
+        <div className="text-center mt-2">
+          <button className="btn btn-primary" onClick={handleShareWhatsApp}>
+            📤 Share via WhatsApp
+          </button>
+        </div>
+
       </div>
     </div>
   );

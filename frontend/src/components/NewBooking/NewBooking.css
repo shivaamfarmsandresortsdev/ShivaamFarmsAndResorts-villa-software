@@ -9,15 +9,18 @@
   justify-content: center;
   align-items: center;
   z-index: 2000;
-  overflow-y: auto; /* allow scrolling when content is taller than viewport */
+  overflow-y: auto;
+  padding: 1rem;
+  /* allow scrolling when content is taller than viewport */
 }
 
 .new-booking-page {
   width: 100%;
-  max-width: 720px;
+  max-width: 1200px;
+  /* ⬅️ widened from 720px */
   box-sizing: border-box;
-  max-height: calc(100vh - 200px);
-  overflow: auto !important; /* internal scroll if content overflows */
+  max-height: calc(100vh - 120px);
+  overflow: auto !important;
 }
 
 .animate-fade-in {
@@ -29,6 +32,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -46,6 +50,7 @@
   .new-booking-page {
     max-width: 92%;
   }
+
   .new-booking-page .card {
     padding: 1rem;
   }
@@ -71,6 +76,7 @@
     flex-direction: column-reverse;
     align-items: stretch;
   }
+
   .new-booking-page .form-actions .btn {
     width: 100%;
   }
@@ -96,8 +102,18 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
+
+/* Keep selected villa names in one line */
+.villa-multiselect-display,
+.new-booking-page .form-control {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
