@@ -109,14 +109,14 @@ const Invoice = ({ booking, onClose }) => {
     // doc.text(`Rs. ${booking.base_amount}`, 105, y);;
     // doc.text("1", 142, y);
     // doc.text(`Rs. ${booking.base_amount}`, 170, y);
+    // Single consolidated line item (no villa names)
+    doc.text("Villa Booking", 20, y);
+    doc.text(`Rs. ${Number(booking.base_amount).toFixed(2)}`, 105, y);
+    doc.text("1", 142, y);
+    doc.text(`Rs. ${Number(booking.base_amount).toFixed(2)}`, 170, y);
 
-    villas.forEach((villa) => {
-      doc.text(villa, 20, y);
-      doc.text(`Rs. ${booking.base_amount}`, 105, y);
-      doc.text("1", 142, y);
-      doc.text(`Rs. ${booking.base_amount}`, 170, y);
-      y += 8;
-    });
+    y += 8;
+
 
     /* ---------------- GST TABLE ---------------- */
     // y += 15;
