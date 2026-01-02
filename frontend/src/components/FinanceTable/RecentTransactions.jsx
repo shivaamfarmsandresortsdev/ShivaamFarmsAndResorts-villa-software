@@ -13,7 +13,7 @@ const RecentTransactions = () => {
 
   useEffect(() => {
     let stockData = [];
-    let bookingData = [];
+    // let bookingData = [];
 
     axios
       .get("https://shivaam-farms-and-resorts-villa.onrender.com/api/stocks")
@@ -30,11 +30,11 @@ const RecentTransactions = () => {
             source: "Stock",
             advancedAmount: 0,
             remainingAmount: 0,
-            gst_type: "-",
-            gst_amount: 0,
-            cgst_amount: 0,
-            sgst_amount: 0,
-            igst_amount: 0,
+            // gst_type: "-",
+            // gst_amount: 0,
+            // cgst_amount: 0,
+            // sgst_amount: 0,
+            // igst_amount: 0,
             total_amount: Number(item.price) || 0, // still keeping total_amount for summary
           }));
         }
@@ -44,45 +44,76 @@ const RecentTransactions = () => {
         const bookingArray = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data.data)
-          ? res.data.data
-          : [];
+            ? res.data.data
+            : [];
 
-        bookingData = bookingArray.map((item) => {
-          const advancedAmount = Number(item.advanced_amount) || 0;
-          const remainingAmount = Number(item.remaining_amount) || 0;
-          const customerPayment = Number(item.customer_payment || 0); // use customer_payment column
+        // ✅ 1. GROUP BOOKINGS (bulk-aware)
+        const bookingMap = new Map();
 
-          const gst_amount = Number(item.gst_amount) || 0;
-          const cgst_amount = Number(item.cgst_amount) || 0;
-          const sgst_amount = Number(item.sgst_amount) || 0;
-          const igst_amount = Number(item.igst_amount) || 0;
-          const gst_type = item.gst_type || "CGST + SGST (9% + 9%)";
+        bookingArray.forEach((row) => {
+          const key = row.bulk_id || row.id; // 👈 SAME logic as Booking table
 
-          return {
-            description: `${item.guest || "Unknown Guest"} | ${item.villa || "Villa"}`,
-            date: item.checkIn || item.created_at || new Date().toISOString(),
-            advancedAmount,
-            remainingAmount,
-            type: "profit",
-            status: item.status || "completed",
-            receivedBy: item.received_by || "Customer",
-            paymentMode: item.payment_mode || "Online",
-            paymentCategory:
-              advancedAmount > 0
-                ? "Advanced"
-                : remainingAmount > 0
-                ? "Remaining"
-                : "Total",
-            source: "Booking",
-            gst_type,
-            gst_amount,
-            cgst_amount,
-            sgst_amount,
-            igst_amount,
-            total_amount: customerPayment, // Total Amount now from customer_payment, NO GST added
-          };
+          if (!bookingMap.has(key)) {
+            bookingMap.set(key, {
+              guest: row.guest,
+              villas: [],
+              date: row.checkIn || row.created_at,
+
+              advancedAmount: Number(row.advanced_amount) || 0,
+              remainingAmount: Number(row.remaining_amount) || 0,
+              customerPayment: Number(row.customer_payment) || 0,
+
+              gst_type: row.gst_type || "-",
+              gst_amount: Number(row.gst_amount) || 0,
+              cgst_amount: Number(row.cgst_amount) || 0,
+              sgst_amount: Number(row.sgst_amount) || 0,
+              igst_amount: Number(row.igst_amount) || 0,
+
+              status: row.status,
+              receivedBy: row.received_by,
+              paymentMode: row.payment_mode,
+            });
+          }
+
+          // 👇 merge villas like Booking table
+          const entry = bookingMap.get(key);
+          if (row.villa) entry.villas.push(row.villa);
         });
 
+
+        // ✅ 2. CONVERT bookingMap → bookingData  👈 YOUR CODE GOES HERE
+        const bookingData = Array.from(bookingMap.values()).map((b) => ({
+          description: `${b.guest} | ${b.villas.join(", ")}`,
+          date: b.date,
+
+          advancedAmount: b.advancedAmount,
+          remainingAmount: b.remainingAmount,
+
+          type: "profit",
+          source: "Booking",
+
+          status: b.status,
+          receivedBy: b.receivedBy,
+          paymentMode: b.paymentMode,
+
+          paymentCategory:
+            b.advancedAmount > 0
+              ? "Advanced"
+              : b.remainingAmount > 0
+                ? "Remaining"
+                : "Total",
+
+          gst_type: b.gst_type,
+          gst_amount: b.gst_amount,
+          cgst_amount: b.cgst_amount,
+          sgst_amount: b.sgst_amount,
+          igst_amount: b.igst_amount,
+
+          total_amount: b.customerPayment, // ✅ ONCE PER BULK
+        }));
+
+
+        // ✅ 3. COMBINE WITH STOCK DATA
         const combined = [...stockData, ...bookingData].sort(
           (a, b) => new Date(b.date) - new Date(a.date)
         );
@@ -90,6 +121,7 @@ const RecentTransactions = () => {
         setTransactions(combined);
         setFilteredTransactions(combined);
       })
+
       .catch((err) => console.error("Error fetching stock/booking data:", err));
   }, []);
 
@@ -196,11 +228,11 @@ const RecentTransactions = () => {
                 <th>Received By</th>
                 <th>Payment Mode</th>
                 <th>Payment Category</th>
-                <th>GST Type</th>
+                {/* <th>GST Type</th>
                 <th>GST Amount</th>
                 <th>CGST Amount</th>
                 <th>SGST Amount</th>
-                <th>IGST Amount</th>
+                <th>IGST Amount</th> */}
                 <th>Total Amount</th>
               </tr>
             </thead>
@@ -210,56 +242,86 @@ const RecentTransactions = () => {
                   <td>{row.source}</td>
                   <td>{row.description}</td>
                   <td>{new Date(row.date).toLocaleDateString()}</td>
-                  {/* Removed Amount cell */}
-                  <td>Rs. {row.advancedAmount.toLocaleString()}</td>
-                  <td>Rs. {row.remainingAmount.toLocaleString()}</td>
+                  <td className="text-end">₹ {row.advancedAmount.toLocaleString()}</td>
+                  <td className="text-end">₹ {row.remainingAmount.toLocaleString()}</td>
                   <td>{getStatusBadge(row.status)}</td>
                   <td>{row.receivedBy}</td>
                   <td>{row.paymentMode}</td>
                   <td>{row.paymentCategory}</td>
-                  <td>{row.gst_type || "-"}</td>
-                  <td>Rs. {(row.gst_amount || 0).toLocaleString()}</td>
-                  <td>Rs. {(row.cgst_amount || 0).toLocaleString()}</td>
-                  <td>Rs. {(row.sgst_amount || 0).toLocaleString()}</td>
-                  <td>Rs. {(row.igst_amount || 0).toLocaleString()}</td>
-                  <td className={getAmountStyle(row.type)}>
-                    Rs. {(row.total_amount || 0).toLocaleString()}
+                  <td className={`text-end ${getAmountStyle(row.type)}`}>
+                    ₹ {(row.total_amount || 0).toLocaleString()}
                   </td>
                 </tr>
               ))}
 
+              {currentTransactions.length > 0 && (
+                <>
+                  {/* GRAND TOTAL */}
+                  <tr className="table-light fw-bold border-top">
+                    <td colSpan="9" className="text-end">
+                      Grand Total
+                    </td>
+                    <td className="text-end">
+                      ₹ {(
+                        currentTransactions.reduce(
+                          (sum, t) => sum + (t.source === "Booking" ? t.total_amount || 0 : 0),
+                          0
+                        ) -
+                        currentTransactions.reduce(
+                          (sum, t) => sum + (t.source === "Stock" ? t.total_amount || 0 : 0),
+                          0
+                        )
+                      ).toLocaleString()}
+                    </td>
+                  </tr>
+
+                  {/* ONLINE */}
                   <tr className="table-light fw-bold">
-      <td colSpan="14">Grand Total</td>
-      <td>
-        Rs. {(currentTransactions.reduce((sum, t) => sum + (t.source === "Booking" ? t.total_amount || 0 : 0), 0) -
-              currentTransactions.reduce((sum, t) => sum + (t.source === "Stock" ? t.total_amount || 0 : 0), 0))
-              .toLocaleString()}
-      </td>
-    </tr>
+                    <td colSpan="9" className="text-end">
+                      Online Transactions (Booking / Stock)
+                    </td>
+                    <td className="text-end">
+                      ₹ {currentTransactions
+                        .filter(t => t.paymentMode === "Online" && t.source === "Booking")
+                        .reduce((s, t) => s + (t.total_amount || 0), 0)
+                        .toLocaleString()}
+                      {" / "}
+                      ₹ {currentTransactions
+                        .filter(t => t.paymentMode === "Online" && t.source === "Stock")
+                        .reduce((s, t) => s + (t.total_amount || 0), 0)
+                        .toLocaleString()}
+                    </td>
+                  </tr>
 
-    <tr className="table-light fw-bold">
-      <td colSpan="14">Online Transactions (Booking / Stock)</td>
-      <td>
-        Rs. {currentTransactions.reduce((sum, t) => sum + ((t.paymentMode === "Online" && t.source === "Booking") ? t.total_amount || 0 : 0), 0).toLocaleString()} / Rs. {currentTransactions.reduce((sum, t) => sum + ((t.paymentMode === "Online" && t.source === "Stock") ? t.total_amount || 0 : 0), 0).toLocaleString()}
-      </td>
-    </tr>
+                  {/* CASH */}
+                  <tr className="table-light fw-bold">
+                    <td colSpan="9" className="text-end">
+                      Cash Transactions (Booking / Stock)
+                    </td>
+                    <td className="text-end">
+                      ₹ {currentTransactions
+                        .filter(t => t.paymentMode === "Cash" && t.source === "Booking")
+                        .reduce((s, t) => s + (t.total_amount || 0), 0)
+                        .toLocaleString()}
+                      {" / "}
+                      ₹ {currentTransactions
+                        .filter(t => t.paymentMode === "Cash" && t.source === "Stock")
+                        .reduce((s, t) => s + (t.total_amount || 0), 0)
+                        .toLocaleString()}
+                    </td>
+                  </tr>
+                </>
+              )}
 
-    <tr className="table-light fw-bold">
-      <td colSpan="14">Cash Transactions (Booking / Stock)</td>
-      <td>
-        Rs. {currentTransactions.reduce((sum, t) => sum + ((t.paymentMode === "Cash" && t.source === "Booking") ? t.total_amount || 0 : 0), 0).toLocaleString()} / Rs. {currentTransactions.reduce((sum, t) => sum + ((t.paymentMode === "Cash" && t.source === "Stock") ? t.total_amount || 0 : 0), 0).toLocaleString()}
-      </td>
-    </tr>
-
-    {currentTransactions.length === 0 && (
-      <tr>
-        <td colSpan="15" className="text-center text-muted py-3">
-          No transactions found
-        </td>
-      </tr>
-    )}
-
+              {currentTransactions.length === 0 && (
+                <tr>
+                  <td colSpan="10" className="text-center text-muted py-3">
+                    No transactions found
+                  </td>
+                </tr>
+              )}
             </tbody>
+
           </table>
         </div>
       </div>
