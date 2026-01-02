@@ -445,6 +445,7 @@ export const addBulkBookings = async (req, res) => {
 
 /* Delete bulk booking */
 export const deleteBulkBooking = async (req, res) => {
+    console.log("🔥 BULK DELETE HIT", req.params.bulk_id);
   const { bulk_id } = req.params;
 
   if (!bulk_id) {

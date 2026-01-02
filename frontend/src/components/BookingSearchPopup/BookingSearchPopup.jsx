@@ -18,11 +18,24 @@ const baseColors = [
 
 // Generate a color for any villa number
 const getVillaColor = (villa) => {
-  if (!villa) return "#999"; // fallback color
-  const num = parseInt(villa.toString().replace(/\D/g, "")) - 1;
-  // Cycle through baseColors if villa number > palette length
-  return baseColors[num % baseColors.length];
+  if (!villa) return "#999";
+
+  // Try number-based color first
+  const digits = villa.toString().match(/\d+/);
+  if (digits) {
+    const num = parseInt(digits[0], 10) - 1;
+    return baseColors[num % baseColors.length];
+  }
+
+  // Fallback: hash villa name
+  let hash = 0;
+  for (let i = 0; i < villa.length; i++) {
+    hash = villa.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return baseColors[Math.abs(hash) % baseColors.length];
 };
+
 
 const BookingSearchPopup = ({ onClose, onSelect }) => {
   const role = localStorage.getItem("role");
@@ -66,6 +79,25 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
       .toString()
       .padStart(2, "0")}-${d.getFullYear()}`;
   };
+
+  const getVillas = (b) => {
+    if (Array.isArray(b.villas)) return b.villas;
+    if (b.villa) return [b.villa];
+    return [];
+  };
+  const getPaymentMode = (b) =>
+    b.payment_mode || b.paymentMode || "-";
+
+  const getAdvance = (b) =>
+    Number(b.advanced_amount ?? b.advancedAmount ?? 0);
+
+  const getRemaining = (b) =>
+    Number(b.remaining_amount ?? b.remainingAmount ?? 0);
+
+  const getTotal = (b) =>
+    Number(b.base_amount ?? b.baseAmount ?? 0);
+
+
 
   return (
     <div
@@ -111,49 +143,77 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
           <p className="text-muted text-center mt-3">No bookings found.</p>
         ) : (
           <div className="results-list">
-            {filtered.map((b) => (
-              <div
-                key={b.id}
-                className="result-item shadow-sm p-3 rounded mb-2 bg-white cursor-pointer"
-                onClick={() => {
-                  onSelect && onSelect(b);
-                  onClose();
-                }}
-              >
-                <div className="d-flex align-items-center mb-1">
-                  {/* Colored Dot */}
-                  <span
-                    className="villa-dot me-2"
-                    style={{ backgroundColor: getVillaColor(b.villa) }}
-                  ></span>
-                  <div className="fw-bold fs-6">
-                    {b.guest} — {b.villa}
+            {filtered.map((b) => {
+              console.log("SEARCH BOOKING RAW:", b);
+              const villas = getVillas(b);
+              const primaryVilla = villas[0];
+
+              return (
+                <div
+                  key={b.id}
+                  className="result-item shadow-sm p-3 rounded mb-2 bg-white cursor-pointer"
+                  onClick={async () => {
+                    try {
+                      const res = await axios.get(
+                        `https://shivaam-farms-and-resorts-villa-kynh.onrender.com/api/bookings/${b.id}`
+                      );
+
+                      onSelect && onSelect(res.data.data);
+                      onClose();
+                    } catch (err) {
+                      console.error("Failed to load booking details", err);
+                      alert("Failed to load booking details");
+                    }
+                  }}
+                >
+
+                  <div className="d-flex align-items-center mb-1">
+                    <span
+                      className="villa-dot me-2"
+                      style={{ backgroundColor: getVillaColor(primaryVilla) }}
+                    ></span>
+                    <div>
+                      <div className="fw-bold fs-6">{b.guest}</div>
+                      <div className="small text-muted">
+                        {villas.join(", ")}
+                        {villas.length > 1 && (
+                          <span className="badge bg-info ms-2">Bulk</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="small text-muted mb-1">
+                    {formatDate(b.check_in || b.checkIn)} →{" "}
+                    {formatDate(b.check_out || b.checkOut)}
+                  </div>
+
+                  {!isExecutive && (
+                    <>
+                      <div className="small mb-1">
+                        Payment: {getPaymentMode(b)}
+                      </div>
+
+                      <div className="small mb-1">
+                        Advance: ₹{getAdvance(b)}
+                      </div>
+
+                      <div className="small mb-1">
+                        Balance: ₹{getRemaining(b)}
+                      </div>
+
+                      <div className="fw-bold">
+                        Total: ₹{getTotal(b)}
+                      </div>
+                    </>
+                  )}
+                  {b.status && (
+                    <div className="badge bg-secondary mt-2">{b.status}</div>
+                  )}
                 </div>
+              );
+            })}
 
-                <div className="small text-muted mb-1">
-                  {formatDate(b.check_in || b.checkIn)} →{" "}
-                  {formatDate(b.check_out || b.checkOut)}
-                </div>
-                {/* <div className="small mb-1">
-                  {b.email} |  {b.phone} |  Guests: {b.guests || 1}
-                </div> */}
-                {/* Hide financial data for EXECUTIVE */}
-
-                {!isExecutive && (
-                  <>
-                    <div className="small mb-1"> Payment: {b.payment_mode || "-"}</div>
-                    <div className="small mb-1"> Advance: ₹{b.advanced_amount || 0}</div>
-                    <div className="small mb-1"> Balance: ₹{b.remaining_amount || 0}</div>
-                    <div className="fw-bold">Total: ₹{b.total_amount || 0}</div>
-                  </>
-                )}
-
-                {b.status && (
-                  <div className="badge bg-secondary mt-2">{b.status}</div>
-                )}
-              </div>
-            ))}
           </div>
         )}
       </div>

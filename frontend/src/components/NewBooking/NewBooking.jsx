@@ -20,7 +20,7 @@ const NewBooking = ({ onClose, onSave }) => {
     status: "Pending",
 
     baseAmount: "",
-    gstType: "",
+    // gstType: "",
     totalAmount: 0,
     receivedBy: "",
     paymentMode: "",
@@ -101,12 +101,9 @@ const NewBooking = ({ onClose, onSave }) => {
         const advanced = Number(
           name === "advancedAmount" ? value : next.advancedAmount
         );
-        const base = Number(name === "baseAmount" ? value : next.baseAmount) || 0;
-        const gstRate = next.gstType ? 0.18 : 0;
-        const gst = +(base * gstRate).toFixed(2);
-        const total = +(base + gst).toFixed(2);
-        next.remainingAmount = Math.max(total - (advanced || 0), 0);
+        const total = base;
         next.totalAmount = total;
+        next.remainingAmount = Math.max(total - (advanced || 0), 0);
       }
 
       return next;
@@ -122,13 +119,17 @@ const NewBooking = ({ onClose, onSave }) => {
   // Recompute total when baseAmount or gstType changes
   useEffect(() => {
     const base = Number(formData.baseAmount || 0);
-    if (!base || !formData.gstType) {
-      setFormData((prev) => ({ ...prev, totalAmount: 0 }));
+
+    if (!base) {
+      setFormData((prev) => ({
+        ...prev,
+        totalAmount: 0,
+        remainingAmount: 0,
+      }));
       return;
     }
-    const gstRate = 0.18;
-    const gstAmount = +(base * gstRate).toFixed(2);
-    const total = +(base + gstAmount).toFixed(2);
+
+    const total = base; // 🔥 GST REMOVED
 
     setFormData((prev) => ({
       ...prev,
@@ -138,7 +139,13 @@ const NewBooking = ({ onClose, onSave }) => {
           ? Math.max(total - (prev.advancedAmount || 0), 0)
           : 0,
     }));
-  }, [formData.baseAmount, formData.gstType, formData.paymentCategory, formData.advancedAmount]);
+  }, [
+    formData.baseAmount,
+    formData.paymentCategory,
+    formData.advancedAmount,
+  ]);
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -151,7 +158,7 @@ const NewBooking = ({ onClose, onSave }) => {
     if (formData.nights <= 0) return alert("Invalid dates");
     if (!formData.baseAmount || Number(formData.baseAmount) <= 0)
       return alert("Enter base amount");
-    if (!formData.gstType) return alert("Select GST type");
+    // if (!formData.gstType) return alert("Select GST type");
     if (!formData.receivedBy.trim()) return alert("Enter received by");
     if (!formData.paymentMode) return alert("Select payment mode");
 
@@ -168,7 +175,7 @@ const NewBooking = ({ onClose, onSave }) => {
       guests: Number(formData.guests),
 
       baseAmount: Number(formData.baseAmount),
-      gstType: formData.gstType,
+      // gstType: formData.gstType,
       advancedAmount:
         formData.paymentCategory === "Advanced"
           ? Number(formData.advancedAmount || 0)
@@ -285,7 +292,7 @@ const NewBooking = ({ onClose, onSave }) => {
         guests: 1,
 
         baseAmount: "",
-        gstType: "",
+        // gstType: "",
         totalAmount: 0,
 
         paymentCategory: "Total",
@@ -320,15 +327,16 @@ const NewBooking = ({ onClose, onSave }) => {
 
       // -------- Amount calculation --------
       const base = Number(row.baseAmount || 0);
-      if (!base || !row.gstType) {
+      if (!base) {
         row.totalAmount = 0;
         row.remainingAmount = 0;
         return;
       }
 
-      const gst = +(base * 0.18).toFixed(2);
-      const total = +(base + gst).toFixed(2);
+
+      const total = base; // 🔥 base = total
       row.totalAmount = total;
+
 
       if (row.paymentCategory === "Advanced") {
         row.remainingAmount = Math.max(
@@ -385,7 +393,6 @@ const NewBooking = ({ onClose, onSave }) => {
           !r.checkOut ||
           r.nights <= 0 ||
           !r.baseAmount ||
-          !r.gstType ||
           !r.paymentMode ||
           !r.receivedBy
         ) {
@@ -406,7 +413,7 @@ const NewBooking = ({ onClose, onSave }) => {
             guests: r.guests,
 
             baseAmount: r.baseAmount,
-            gstType: r.gstType,
+            // gstType: r.gstType,
             paymentCategory: r.paymentCategory,
             advancedAmount:
               r.paymentCategory === "Advanced" ? r.advancedAmount : 0,
@@ -545,7 +552,7 @@ const NewBooking = ({ onClose, onSave }) => {
               />
             </div>
 
-            <div className="col-12 col-sm-6">
+            {/* <div className="col-12 col-sm-6">
               <label>GST Type</label>
               <select
                 className="form-select"
@@ -556,7 +563,7 @@ const NewBooking = ({ onClose, onSave }) => {
                 <option value="CGST + SGST (9% + 9%)">CGST + SGST (9% + 9%)</option>
                 <option value="IGST (18%)">IGST (18%)</option>
               </select>
-            </div>
+            </div> */}
 
             <div className="col-12 col-sm-6">
               <label>Payment Mode</label>
@@ -768,15 +775,14 @@ const NewBooking = ({ onClose, onSave }) => {
               <div className="col-12 col-sm-6">
                 <label>Nights</label>
                 <input
-                  value={
-                    Number.isFinite(formData.nights) && formData.nights > 0
-                      ? `${formData.nights} nights`
-                      : ""
-                  }
+                  className="form-control"
+                  placeholder="Auto calculated"
+                  value={formData.nights > 0 ? `${formData.nights} nights` : ""}
                   readOnly
                 />
 
               </div>
+
 
               <div className="col-12 col-sm-6">
                 <label>Guests</label>
@@ -788,14 +794,14 @@ const NewBooking = ({ onClose, onSave }) => {
                 <input name="baseAmount" type="number" value={formData.baseAmount} onChange={handleChange} className="form-control" />
               </div>
 
-              <div className="col-12 col-sm-6">
+              {/* <div className="col-12 col-sm-6">
                 <label>GST Type</label>
                 <select name="gstType" value={formData.gstType} onChange={handleChange} className="form-select">
                   <option value="">Select</option>
                   <option value="CGST + SGST (9% + 9%)">CGST + SGST (9% + 9%)</option>
                   <option value="IGST (18%)">IGST (18%)</option>
                 </select>
-              </div>
+              </div> */}
 
               <div className="col-12 col-sm-6">
                 <label>Payment Mode</label>
@@ -833,8 +839,6 @@ const NewBooking = ({ onClose, onSave }) => {
                 />
               </div>
 
-
-
               {formData.paymentCategory === "Advanced" && (
                 <>
                   <div className="col-12 col-sm-6">
@@ -845,7 +849,8 @@ const NewBooking = ({ onClose, onSave }) => {
                   <div className="col-12 col-sm-6">
                     <label>Remaining (₹)</label>
                     <input
-                      value={Number.isFinite(formData.totalAmount) ? formData.totalAmount : 0}
+                      className="form-control"
+                      value={Number.isFinite(formData.remainingAmount) ? formData.remainingAmount : 0}
                       readOnly
                     />
                   </div>
@@ -855,7 +860,8 @@ const NewBooking = ({ onClose, onSave }) => {
               <div className="col-12 col-sm-6">
                 <label>Total Amount (auto)</label>
                 <input
-                  value={Number.isFinite(formData.remainingAmount) ? formData.remainingAmount : 0}
+                  className="form-control"
+                  value={Number.isFinite(formData.totalAmount) ? formData.totalAmount : 0}
                   readOnly
                 />
               </div>

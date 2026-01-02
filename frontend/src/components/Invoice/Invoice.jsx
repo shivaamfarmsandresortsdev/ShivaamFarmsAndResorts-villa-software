@@ -20,24 +20,24 @@ const Invoice = ({ booking, onClose }) => {
   };
 
   // ------------------------- GST TABLE BUILDER -------------------------
-  const getGSTRows = () => {
-    const rows = [];
+  // const getGSTRows = () => {
+  //   const rows = [];
 
-    if (booking.gst_type === "CGST + SGST (9% + 9%)") {
-      rows.push({ label: "CGST (9%)", value: booking.cgst_amount });
-      rows.push({ label: "SGST (9%)", value: booking.sgst_amount });
-    }
+  //   if (booking.gst_type === "CGST + SGST (9% + 9%)") {
+  //     rows.push({ label: "CGST (9%)", value: booking.cgst_amount });
+  //     rows.push({ label: "SGST (9%)", value: booking.sgst_amount });
+  //   }
 
-    if (booking.gst_type === "IGST (18%)") {
-      rows.push({ label: "IGST (18%)", value: booking.igst_amount });
-    }
+  //   if (booking.gst_type === "IGST (18%)") {
+  //     rows.push({ label: "IGST (18%)", value: booking.igst_amount });
+  //   }
 
-    rows.push({ label: "Total GST", value: booking.gst_amount });
+  //   rows.push({ label: "Total GST", value: booking.gst_amount });
 
-    return rows;
-  };
+  //   return rows;
+  // };
 
-  const gstRows = getGSTRows();
+  // const gstRows = getGSTRows();
 
   // ------------------------- PDF DOWNLOAD -------------------------
   const handleDownload = (doc = null, silent = false) => {
@@ -119,37 +119,46 @@ const Invoice = ({ booking, onClose }) => {
     });
 
     /* ---------------- GST TABLE ---------------- */
+    // y += 15;
+
+    // // GST Details Header/Title
+    // doc.setFontSize(12);
+    // doc.text("GST Details", 15, y);
+    // y += 5; // move down after the title
+
+    // // Tax Header Row
+    // doc.setFont("helvetica", "bold");
+    // doc.setFillColor(255, 245, 204); // table-warning color
+    // doc.rect(15, y, pageWidth - 30, 8, "F");
+    // doc.text("Tax Type", 20, y + 6);
+    // doc.text("Amount (Rs.)", 165, y + 6);
+
+    // y += 14;
+    // doc.setFont("helvetica", "normal");
+
+    // // Auto GST rows (IGST/CGST+SGST, and Total GST)
+    // const rows = getGSTRows();
+    // rows.forEach((r) => {
+    //   doc.text(r.label, 20, y);
+    //   doc.text(`Rs. ${Number(r.value).toFixed(2)}`, 170, y); // Added '₹' and toFixed(2)
+    //   y += 8;
+    // });
+
+    // // FIX: Grand Total Row - This was the row missing from the image replication
+    // doc.setFont("helvetica", "bold");
+    // doc.setFillColor(220, 237, 247); // A light blue color for Grand Total row
+    // doc.rect(15, y, pageWidth - 30, 8, "F");
+    // doc.text("Grand Total", 20, y + 6);
+    // doc.text(`Rs. ${Number(booking.total_amount).toFixed(2)}`, 170, y + 6); // Use toFixed(2) for consistency
+
+    /* ---------------- GRAND TOTAL ---------------- */
     y += 15;
-
-    // GST Details Header/Title
-    doc.setFontSize(12);
-    doc.text("GST Details", 15, y);
-    y += 5; // move down after the title
-
-    // Tax Header Row
     doc.setFont("helvetica", "bold");
-    doc.setFillColor(255, 245, 204); // table-warning color
-    doc.rect(15, y, pageWidth - 30, 8, "F");
-    doc.text("Tax Type", 20, y + 6);
-    doc.text("Amount (Rs.)", 165, y + 6);
-
-    y += 14;
-    doc.setFont("helvetica", "normal");
-
-    // Auto GST rows (IGST/CGST+SGST, and Total GST)
-    const rows = getGSTRows();
-    rows.forEach((r) => {
-      doc.text(r.label, 20, y);
-      doc.text(`Rs. ${Number(r.value).toFixed(2)}`, 170, y); // Added '₹' and toFixed(2)
-      y += 8;
-    });
-
-    // FIX: Grand Total Row - This was the row missing from the image replication
-    doc.setFont("helvetica", "bold");
-    doc.setFillColor(220, 237, 247); // A light blue color for Grand Total row
+    doc.setFillColor(220, 237, 247);
     doc.rect(15, y, pageWidth - 30, 8, "F");
     doc.text("Grand Total", 20, y + 6);
-    doc.text(`Rs. ${Number(booking.total_amount).toFixed(2)}`, 170, y + 6); // Use toFixed(2) for consistency
+    doc.text(`Rs. ${Number(booking.base_amount).toFixed(2)}`, 170, y + 6);
+
 
     /* ---------------- PAYMENT DETAILS ---------------- */
     y += 16;
@@ -242,7 +251,7 @@ const Invoice = ({ booking, onClose }) => {
 ${villas.map(v => `• ${v}`).join("\n")}
 📅 Check-in: ${formatDate(booking.checkIn)}
 📅 Check-out: ${formatDate(booking.checkOut)}
-💰 Amount: ₹${Number(booking.total_amount).toFixed(2)}
+💰 Amount: ₹${Number(booking.base_amount).toFixed(2)}
 
 📎 Download Invoice:
 ${publicUrl}
@@ -319,7 +328,7 @@ Thank you for booking with Shivaam Farms & Resorts 🌿
         </table>
 
         {/* GST TABLE */}
-        <h6 className="fw-bold mb-2">GST Details</h6>
+        {/* <h6 className="fw-bold mb-2">GST Details</h6>
         <table className="table table-bordered text-center align-middle">
           <thead className="table-warning">
             <tr>
@@ -339,7 +348,11 @@ Thank you for booking with Shivaam Farms & Resorts 🌿
               <td>₹{booking.total_amount}</td>
             </tr>
           </tbody>
-        </table>
+        </table> */}
+
+        <p className="fw-bold text-end">
+          Grand Total: ₹{Number(booking.base_amount).toFixed(2)}
+        </p>
 
         {/* EXTRA INFO */}
         <p className="mt-3"><strong>Payment Mode:</strong> {booking.payment_mode}</p>

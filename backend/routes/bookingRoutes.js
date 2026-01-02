@@ -33,8 +33,10 @@ router.get("/villa/:villa", getBookingsByVilla);
 // Update
 router.put("/:id", updateBooking);
 
-// Delete
+// 🔥 BULK DELETE — MUST COME FIRST
 router.delete("/bulk/:bulk_id", deleteBulkBooking);
+
+// 🔥 SINGLE DELETE — generic, validated in controller
 router.delete("/:id", deleteBooking);
 
 export default router;

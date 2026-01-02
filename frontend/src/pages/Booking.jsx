@@ -15,14 +15,25 @@ import EditBooking from "../components/EditBooking/EditBooking";
 import Invoice from "../components/Invoice/Invoice";
 import "./Booking.css";
 
-  const API_BASE =
-    import.meta.env.VITE_API_BASE ||
-    "https://shivaam-farms-and-resorts-villa-kynh.onrender.com";
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  "https://shivaam-farms-and-resorts-villa-kynh.onrender.com";
 // ---------------- CSV Export ----------------
 const exportToCSV = (rows, filename) => {
   if (!rows.length) return;
 
-  const headers = Object.keys(rows[0]);
+  const excludedKeys = [
+    "gst_type",
+    "cgst_amount",
+    "sgst_amount",
+    "igst_amount",
+    "gst_amount",
+  ];
+
+  const headers = Object.keys(rows[0]).filter(
+    (h) => !excludedKeys.includes(h)
+  );
+
   const csvContent =
     "data:text/csv;charset=utf-8," +
     [headers.join(","), ...rows.map((r) =>
@@ -208,8 +219,6 @@ const Booking = () => {
     fetchBookings(); // refresh list
   };
 
-
-
   const handleSaveEditedBooking = async (updatedBooking) => {
     const bookingId = updatedBooking.id || selectedBooking?.id;
     if (!bookingId) return;
@@ -337,11 +346,11 @@ const Booking = () => {
                       {!isExecutive && (
                         <>
                           <th>Base Amount (₹)</th>
-                          <th>GST Type</th>
+                          {/* <th>GST Type</th>
                           <th>CGST (₹)</th>
                           <th>SGST (₹)</th>
                           <th>IGST (₹)</th>
-                          <th>GST Total (₹)</th>
+                          <th>GST Total (₹)</th> */}
                           <th>Total Amount (₹)</th>
                           <th>Advance (₹)</th>
                           <th>Balance</th>
@@ -402,11 +411,11 @@ const Booking = () => {
                         {!isExecutive && (
                           <>
                             <td>₹ {b.base_amount}</td>
-                            <td>{b.gst_type}</td>
+                            {/* <td>{b.gst_type}</td>
                             <td>₹ {b.cgst_amount}</td>
                             <td>₹ {b.sgst_amount}</td>
                             <td>₹ {b.igst_amount}</td>
-                            <td>₹ {b.gst_amount}</td>
+                            <td>₹ {b.gst_amount}</td> */}
                             <td>₹ {b.total_amount}</td>
                             <td>₹ {b.advanced_amount}</td>
                             <td>
