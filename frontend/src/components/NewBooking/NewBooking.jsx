@@ -101,10 +101,17 @@ const NewBooking = ({ onClose, onSave }) => {
         const advanced = Number(
           name === "advancedAmount" ? value : next.advancedAmount
         );
+
+        const base = Number(
+          name === "baseAmount" ? value : next.baseAmount
+        );
+
         const total = base;
+
         next.totalAmount = total;
         next.remainingAmount = Math.max(total - (advanced || 0), 0);
       }
+
 
       return next;
     });
