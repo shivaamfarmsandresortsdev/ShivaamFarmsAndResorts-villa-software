@@ -10,6 +10,7 @@ import {
   getBookingsByVilla,
   updateBooking,
   updateBulkBooking,
+  getBulkBookingById,
 } from "../controllers/bookingController.js";
 
 const router = express.Router();
@@ -20,6 +21,9 @@ router.post("/bulk", addBulkBookings);
 
 // Read
 router.get("/", getAllBookings);
+
+// Get bulk booking by ID
+router.get("/bulk/:bulk_id", getBulkBookingById);
 
 // Invoice
 router.get("/:id/invoice", generateInvoice);

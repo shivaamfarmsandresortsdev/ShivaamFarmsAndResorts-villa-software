@@ -39,11 +39,12 @@ const getVillaColor = (villa) => {
 
 const BookingSearchPopup = ({ onClose, onSelect }) => {
   const role = localStorage.getItem("role");
-  const isExecutive = role === "executive";
+  const isAdmin = role === "admin";
   const [bookings, setBookings] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const API_BASE = "https://shivaam-farms-and-resorts-villa-kynh.onrender.com";
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -85,17 +86,39 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
     if (b.villa) return [b.villa];
     return [];
   };
-  const getPaymentMode = (b) =>
-    b.payment_mode || b.paymentMode || "-";
+  const num = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const getPaymentMode = (b) => b.payment_mode || b.paymentMode || "-";
 
   const getAdvance = (b) =>
-    Number(b.advanced_amount ?? b.advancedAmount ?? 0);
+    num(
+      b.advanced_amount ??
+      b.advancedAmount ??
+      b.bulk_advanced_amount ??
+      b.bulkAdvancedAmount
+    );
 
   const getRemaining = (b) =>
-    Number(b.remaining_amount ?? b.remainingAmount ?? 0);
+    num(
+      b.remaining_amount ??
+      b.remainingAmount ??
+      b.bulk_remaining_amount ??
+      b.bulkRemainingAmount
+    );
 
   const getTotal = (b) =>
-    Number(b.base_amount ?? b.baseAmount ?? 0);
+    num(
+      b.total_amount ??
+      b.totalAmount ??
+      b.base_amount ??
+      b.baseAmount ??
+      b.bulk_base_amount ??
+      b.bulkBaseAmount
+    );
+
 
 
 
@@ -150,21 +173,39 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
 
               return (
                 <div
-                  key={b.id}
+                  key={b.id || b.booking_id || b.bulk_id || b.bulkId}
                   className="result-item shadow-sm p-3 rounded mb-2 bg-white cursor-pointer"
                   onClick={async () => {
                     try {
-                      const res = await axios.get(
-                        `https://shivaam-farms-and-resorts-villa-kynh.onrender.com/api/bookings/${b.id}`
-                      );
+                      console.log("✅ CLICKED BOOKING:", b);
 
-                      onSelect && onSelect(res.data.data);
-                      onClose();
+                      // ✅ detect ids safely
+                      const bookingId = b.id || b.booking_id;
+                      const bulkId = b.bulk_id || b.bulkId;
+
+                      // ✅ Normal booking
+                      if (bookingId) {
+                        const res = await axios.get(`${API_BASE}/api/bookings/${bookingId}`);
+                        onSelect && onSelect(res.data.data);
+                        onClose();
+                        return;
+                      }
+
+                      // ✅ Bulk booking (if your backend supports it)
+                      if (bulkId) {
+                        const res = await axios.get(`${API_BASE}/api/bookings/bulk/${bulkId}`);
+                        onSelect && onSelect(res.data.data);
+                        onClose();
+                        return;
+                      }
+
+                      alert("❌ No valid booking id found");
                     } catch (err) {
                       console.error("Failed to load booking details", err);
                       alert("Failed to load booking details");
                     }
                   }}
+
                 >
 
                   <div className="d-flex align-items-center mb-1">
@@ -188,23 +229,12 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
                     {formatDate(b.check_out || b.checkOut)}
                   </div>
 
-                  {!isExecutive && (
+                  {isAdmin && (
                     <>
-                      <div className="small mb-1">
-                        Payment: {getPaymentMode(b)}
-                      </div>
-
-                      <div className="small mb-1">
-                        Advance: ₹{getAdvance(b)}
-                      </div>
-
-                      <div className="small mb-1">
-                        Balance: ₹{getRemaining(b)}
-                      </div>
-
-                      <div className="fw-bold">
-                        Total: ₹{getTotal(b)}
-                      </div>
+                      <div className="small mb-1">Payment: {getPaymentMode(b)}</div>
+                      <div className="small mb-1">Advance: ₹{getAdvance(b)}</div>
+                      <div className="small mb-1">Balance: ₹{getRemaining(b)}</div>
+                      <div className="fw-bold">Total: ₹{getTotal(b)}</div>
                     </>
                   )}
                   {b.status && (

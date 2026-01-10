@@ -542,3 +542,43 @@ export const updateBulkBooking = async (req, res) => {
     res.status(500).json({ error: "Bulk update failed" });
   }
 };
+
+export const getBulkBookingById = async (req, res) => {
+  try {
+    const { bulk_id } = req.params;
+
+    // ✅ fetch bulk bookings rows (all bookings belonging to that bulk)
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("bulk_id", bulk_id)
+      .order("check_in", { ascending: true });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "Bulk booking not found" });
+    }
+
+    // ✅ build response like your frontend expects
+    const bulk = {
+      bulk_id,
+      checkIn: data[0].check_in,
+      checkOut: data[0].check_out,
+      baseAmount: data.reduce((sum, b) => sum + Number(b.base_amount || 0), 0),
+      advancedAmount: data.reduce((sum, b) => sum + Number(b.advanced_amount || 0), 0),
+      remainingAmount: data.reduce((sum, b) => sum + Number(b.remaining_amount || 0), 0),
+      paymentCategory: data[0].payment_category,
+      paymentMode: data[0].payment_mode,
+      receivedBy: data[0].received_by,
+      status: data[0].status,
+      villas: data.map((b) => b.villa),
+      bookings: data,
+    };
+
+    return res.json({ data: bulk });
+  } catch (err) {
+    console.error("getBulkBookingById error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
