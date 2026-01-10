@@ -100,29 +100,36 @@ const EditBulkBooking = ({ bulkBooking, onClose, onSave }) => {
         e.preventDefault();
 
         try {
-            const res = await fetch(
-                `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/bulk/${bulkData.bulkId}`,
-                {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(bulkData)
-                }
-            );
+            const url = `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/bulk/${bulkData.bulkId}`;
+
+            console.log("PUT URL:", url);
+            console.log("Payload sending:", bulkData);
+
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(bulkData),
+            });
+
+            const text = await res.text();
+            console.log("Status:", res.status);
+            console.log("Response:", text);
 
             if (!res.ok) {
-                alert("Bulk update failed");
+                alert(`Bulk update failed (${res.status})`);
                 return;
             }
 
-            const data = await res.json();
+            const data = text ? JSON.parse(text) : {};
             alert("Bulk booking updated successfully");
             onSave(data);
             onClose();
         } catch (err) {
-            console.error(err);
+            console.error("Request error:", err);
             alert("Server error");
         }
     };
+
 
     return (
         <div className="new-booking-overlay">

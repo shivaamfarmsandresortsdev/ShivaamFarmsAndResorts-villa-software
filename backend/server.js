@@ -37,10 +37,14 @@ app.get("/__routes_check", (req, res) => {
     routes: [
       "POST /api/bookings",
       "POST /api/bookings/bulk",
-      "DELETE /api/bookings/bulk/:bulk_id"
+      "PUT /api/bookings/bulk/:bulk_id",     // ✅ add this
+      "PUT /api/bookings/:id",
+      "DELETE /api/bookings/bulk/:bulk_id",
+      "DELETE /api/bookings/:id"
     ]
   });
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
