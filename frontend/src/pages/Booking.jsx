@@ -12,6 +12,7 @@ import { GoPeople } from "react-icons/go";
 import Calendar from "../components/Calendar/Calendar";
 import NewBooking from "../components/NewBooking/NewBooking";
 import EditBooking from "../components/EditBooking/EditBooking";
+import EditBulkBooking from "../components/EditBulkBooking/EditBulkBooking";
 import Invoice from "../components/Invoice/Invoice";
 import "./Booking.css";
 
@@ -67,6 +68,7 @@ const Booking = () => {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [showNewBooking, setShowNewBooking] = useState(false);
   const [showEditBooking, setShowEditBooking] = useState(false);
+  const [showEditBulkBooking, setShowEditBulkBooking] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
 
@@ -436,7 +438,18 @@ const Booking = () => {
                               {b.address}
                             </td>
                             <td>
-                              <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setSelectedBooking(b); setShowEditBooking(true); }}>
+                              <button
+                                className="btn btn-sm btn-outline-primary me-1"
+                                onClick={() => {
+                                  setSelectedBooking(b);
+
+                                  if (b.bulk_id) {
+                                    setShowEditBulkBooking(true); // BULK
+                                  } else {
+                                    setShowEditBooking(true);     // SINGLE
+                                  }
+                                }}
+                              >
                                 <FaEdit />
                               </button>
                               <button className="btn btn-sm btn-outline-danger px-2 me-1" onClick={() => handleDeleteBooking(b)}>
@@ -531,6 +544,35 @@ const Booking = () => {
           onClose={() => setShowInvoice(false)}
         />
       )}
+
+      {/* EditBulkBooking overlay */}
+      {showEditBulkBooking && selectedBooking && (
+        <EditBulkBooking
+          bulkBooking={{
+            bulkId: selectedBooking.bulk_id,
+            villa: selectedBooking.villas.join(", "),
+            checkIn: selectedBooking.checkIn,
+            checkOut: selectedBooking.checkOut,
+            baseAmount: selectedBooking.base_amount,
+            paymentCategory: selectedBooking.payment_category,
+            advancedAmount: selectedBooking.advanced_amount,
+            paymentMode: selectedBooking.payment_mode,
+            receivedBy: selectedBooking.received_by,
+            status: selectedBooking.status,
+
+            // all bookings with same bulk_id
+            bookings: bookings.filter(
+              (x) => x.bulk_id === selectedBooking.bulk_id
+            ),
+          }}
+          onClose={() => setShowEditBulkBooking(false)}
+          onSave={async () => {
+            await fetchBookings();
+            setShowEditBulkBooking(false);
+          }}
+        />
+      )}
+
     </div>
   );
 };

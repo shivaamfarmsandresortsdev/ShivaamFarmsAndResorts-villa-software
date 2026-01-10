@@ -469,3 +469,76 @@ export const deleteBulkBooking = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+/* ================= BULK UPDATE BOOKINGS ================= */
+export const updateBulkBooking = async (req, res) => {
+  const { bulk_id } = req.params;
+  const payload = req.body;
+
+  if (!bulk_id) {
+    return res.status(400).json({ error: "Invalid bulk ID" });
+  }
+
+  if (!Array.isArray(payload.bookings) || payload.bookings.length === 0) {
+    return res.status(400).json({ error: "Bookings array required" });
+  }
+
+  try {
+    // 1️⃣ Update COMMON fields for all rows in bulk
+    const baseAmount = Number(payload.baseAmount || 0);
+    const advancedAmount = Number(payload.advancedAmount || 0);
+
+    const remainingAmount =
+      payload.paymentCategory === "Advanced"
+        ? Math.max(baseAmount - advancedAmount, 0)
+        : 0;
+
+    const status =
+      payload.paymentCategory === "Total" || remainingAmount === 0
+        ? "Confirmed"
+        : payload.status || "Pending";
+
+    const commonUpdate = {
+      check_in: payload.checkIn,
+      check_out: payload.checkOut,
+      base_amount: baseAmount,
+      advanced_amount: advancedAmount,
+      remaining_amount: remainingAmount,
+      payment_category: payload.paymentCategory,
+      payment_mode: payload.paymentMode,
+      received_by: payload.receivedBy,
+      status,
+    };
+
+    const { error: commonErr } = await supabase
+      .from("bookings")
+      .update(commonUpdate)
+      .eq("bulk_id", bulk_id);
+
+    if (commonErr) throw commonErr;
+
+    // 2️⃣ Update each guest row individually
+    for (const b of payload.bookings) {
+      if (!b.id) continue;
+
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          guest: b.guest,
+          phone: b.phone ?? null,
+          address: b.address ?? null,
+          villa: b.villa,
+        })
+        .eq("id", b.id);
+
+      if (error) throw error;
+    }
+
+    res.status(200).json({
+      message: "Bulk booking updated successfully",
+    });
+  } catch (err) {
+    console.error("Bulk update failed:", err.message || err);
+    res.status(500).json({ error: "Bulk update failed" });
+  }
+};

@@ -1,0 +1,294 @@
+import React, { useEffect, useState } from "react";
+import Select from "react-select";
+import "./EditBulkBooking.css";
+
+const VILLA_OPTIONS = [
+    { value: "Sample Villa", label: "Sample Villa" },
+    { value: "Khetan Villa", label: "Khetan Villa" },
+    { value: "Madan Villa", label: "Madan Villa" },
+    { value: "Pandhari Villa", label: "Pandhari Villa" },
+    { value: "Dormitory Villa", label: "Dormitory Villa" },
+    { value: "Tidke Villa", label: "Tidke Villa" },
+    { value: "Ishan Villa", label: "Ishan Villa" },
+    { value: "Cottage Villa", label: "Cottage Villa" },
+    { value: "Krishna Villa", label: "Krishna Villa" },
+    { value: "Motvani Villa", label: "Motvani Villa" },
+    { value: "Bhatkar Villa", label: "Bhatkar Villa" },
+];
+
+
+const EditBulkBooking = ({ bulkBooking, onClose, onSave }) => {
+    const [bulkData, setBulkData] = useState({
+        bulkId: null,
+        villas: [], checkIn: "",
+        checkOut: "",
+        baseAmount: 0,
+        paymentCategory: "Total",
+        advancedAmount: 0,
+        remainingAmount: 0,
+        paymentMode: "",
+        receivedBy: "",
+        status: "Pending",
+        bookings: []
+    });
+
+    /* ---------------- LOAD BULK DATA ---------------- */
+    useEffect(() => {
+        if (!bulkBooking) return;
+
+        setBulkData({
+            bulkId: bulkBooking.bulkId,
+            villas: bulkBooking.bookings.map(b => b.villa), checkIn: bulkBooking.checkIn,
+            checkOut: bulkBooking.checkOut,
+            baseAmount: Number(bulkBooking.baseAmount || 0),
+            paymentCategory: bulkBooking.paymentCategory || "Total",
+            advancedAmount: Number(bulkBooking.advancedAmount || 0),
+            remainingAmount:
+                bulkBooking.paymentCategory === "Advanced"
+                    ? Number(bulkBooking.baseAmount || 0) -
+                    Number(bulkBooking.advancedAmount || 0)
+                    : 0,
+            paymentMode: bulkBooking.paymentMode || "",
+            receivedBy: bulkBooking.receivedBy || "",
+            status: bulkBooking.status || "Pending",
+            bookings: bulkBooking.bookings || []
+        });
+    }, [bulkBooking]);
+
+    /* ---------------- PAYMENT CALC ---------------- */
+    useEffect(() => {
+        if (bulkData.paymentCategory === "Advanced") {
+            setBulkData(prev => ({
+                ...prev,
+                remainingAmount:
+                    Number(prev.baseAmount || 0) -
+                    Number(prev.advancedAmount || 0)
+            }));
+        } else {
+            setBulkData(prev => ({
+                ...prev,
+                remainingAmount: 0
+            }));
+        }
+    }, [
+        bulkData.baseAmount,
+        bulkData.advancedAmount,
+        bulkData.paymentCategory
+    ]);
+
+    /* ---------------- HANDLERS ---------------- */
+    const handleChange = (e) => {
+        const { name, value, type } = e.target;
+        setBulkData(prev => ({
+            ...prev,
+            [name]: type === "number" ? Number(value) : value
+        }));
+    };
+
+    const handleGuestChange = (index, field, value) => {
+        const updated = [...bulkData.bookings];
+        updated[index][field] = value;
+
+        setBulkData(prev => ({
+            ...prev,
+            bookings: updated
+        }));
+    };
+
+    /* ---------------- SUBMIT ---------------- */
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            const res = await fetch(
+                `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/bulk/${bulkData.bulkId}`,
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(bulkData)
+                }
+            );
+
+            if (!res.ok) {
+                alert("Bulk update failed");
+                return;
+            }
+
+            const data = await res.json();
+            alert("Bulk booking updated successfully");
+            onSave(data);
+            onClose();
+        } catch (err) {
+            console.error(err);
+            alert("Server error");
+        }
+    };
+
+    return (
+        <div className="new-booking-overlay">
+            <div className="new-booking-page">
+                <div className="card p-4 shadow">
+                    <div className="d-flex justify-content-between mb-3">
+                        <h5>Edit Bulk Booking</h5>
+                        <button className="btn-close" onClick={onClose} />
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="row g-3">
+
+                        {/* COMMON DETAILS */}
+                        <div className="col-sm-6">
+                            <label className="form-label">Villas</label>
+
+                            <Select
+                                isMulti
+                                options={VILLA_OPTIONS}
+                                value={VILLA_OPTIONS.filter(opt =>
+                                    bulkData.villas.includes(opt.value)
+                                )}
+                                onChange={(selected) => {
+                                    const selectedVillas = selected
+                                        ? selected.map(v => v.value)
+                                        : [];
+
+                                    setBulkData(prev => ({
+                                        ...prev,
+                                        villas: selectedVillas,
+                                        bookings: prev.bookings.map((b, i) => ({
+                                            ...b,
+                                            villa: selectedVillas[i] || b.villa
+                                        }))
+                                    }));
+                                }}
+                                placeholder="Select villas..."
+                            />
+                        </div>
+                        <div className="col-sm-6">
+                            <label>Base Amount (₹)</label>
+                            <input
+                                type="number"
+                                name="baseAmount"
+                                value={bulkData.baseAmount}
+                                onChange={handleChange}
+                                className="form-control"
+                            />
+                        </div>
+
+                        <div className="col-sm-6">
+                            <label>Check-in</label>
+                            <input
+                                type="date"
+                                name="checkIn"
+                                value={bulkData.checkIn}
+                                onChange={handleChange}
+                                className="form-control"
+                            />
+                        </div>
+
+                        <div className="col-sm-6">
+                            <label>Check-out</label>
+                            <input
+                                type="date"
+                                name="checkOut"
+                                value={bulkData.checkOut}
+                                onChange={handleChange}
+                                className="form-control"
+                            />
+                        </div>
+
+                        {/* PAYMENT */}
+                        <div className="col-sm-6">
+                            <label>Payment Category</label>
+                            <select
+                                name="paymentCategory"
+                                value={bulkData.paymentCategory}
+                                onChange={handleChange}
+                                className="form-select"
+                            >
+                                <option value="Total">Total</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                        </div>
+
+                        {bulkData.paymentCategory === "Advanced" && (
+                            <>
+                                <div className="col-sm-6">
+                                    <label>Advanced Amount</label>
+                                    <input
+                                        type="number"
+                                        name="advancedAmount"
+                                        value={bulkData.advancedAmount}
+                                        onChange={handleChange}
+                                        className="form-control"
+                                    />
+                                </div>
+
+                                <div className="col-sm-6">
+                                    <label>Remaining</label>
+                                    <input
+                                        readOnly
+                                        value={bulkData.remainingAmount}
+                                        className="form-control"
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {/* GUEST LIST */}
+                        <div className="col-12">
+                            <h6>Guests</h6>
+                            {bulkData.bookings.map((g, i) => (
+                                <div key={g.id} className="row g-2 mb-2">
+                                    <div className="col">
+                                        <input
+                                            value={g.guest || ""}
+                                            onChange={(e) =>
+                                                handleGuestChange(i, "guest", e.target.value)
+                                            }
+                                            className="form-control"
+                                        />
+                                    </div>
+
+                                    <div className="col">
+                                        <input
+                                            value={g.phone || ""}
+                                            onChange={(e) =>
+                                                handleGuestChange(i, "phone", e.target.value)
+                                            }
+                                            className="form-control"
+                                        />
+                                    </div>
+
+                                    <div className="col">
+                                        <input
+                                            value={g.address || ""}
+                                            onChange={(e) =>
+                                                handleGuestChange(i, "address", e.target.value)
+                                            }
+                                            className="form-control"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* ACTIONS */}
+                        <div className="col-12 d-flex justify-content-end gap-2">
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary"
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </button>
+                            <button type="submit" className="btn btn-primary">
+                                Save Bulk Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default EditBulkBooking;

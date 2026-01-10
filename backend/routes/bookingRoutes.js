@@ -8,35 +8,34 @@ import {
   generateInvoice,
   getBookedDates,
   getBookingsByVilla,
-  updateBooking
+  updateBooking,
+  updateBulkBooking,
 } from "../controllers/bookingController.js";
 
 const router = express.Router();
 
 // Create
 router.post("/", addBooking);
-
 router.post("/bulk", addBulkBookings);
 
-// Read all
+// Read
 router.get("/", getAllBookings);
 
-// Invoice (specific route - must come BEFORE /:id)
+// Invoice
 router.get("/:id/invoice", generateInvoice);
 
-// Get booked dates for a specific villa
+// Villa-based
 router.get("/villa/:villa/dates", getBookedDates);
-
-// Get all bookings for a villa
 router.get("/villa/:villa", getBookingsByVilla);
 
-// Update
+// 🔥 BULK UPDATE (FIXED)
+router.put("/bulk/:bulk_id", updateBulkBooking);
+
+// Update single
 router.put("/:id", updateBooking);
 
-// 🔥 BULK DELETE — MUST COME FIRST
+// Delete
 router.delete("/bulk/:bulk_id", deleteBulkBooking);
-
-// 🔥 SINGLE DELETE — generic, validated in controller
 router.delete("/:id", deleteBooking);
 
 export default router;
