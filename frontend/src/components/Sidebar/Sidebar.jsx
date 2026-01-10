@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { GoPeople } from "react-icons/go";
-import { MdCurrencyRupee } from "react-icons/md";
+import { MdCurrencyRupee, MdVilla } from "react-icons/md";
 import { CiCalendar } from "react-icons/ci";
 import { LuBox } from "react-icons/lu";
 import { FaWpforms } from "react-icons/fa";
@@ -18,7 +18,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     if (isOpen) toggleSidebar();
   }, [location.pathname]);
 
-  // ✅ FIXED — Properly closed logout function
   const handleLogout = () => {
     localStorage.removeItem("loggedIn");
     navigate("/login");
@@ -66,6 +65,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 <NavLink to="/staff" className={linkClass}>
                   <GoPeople className="me-2" />
                   Staff
+                </NavLink>
+              </li>
+
+              {/* ✅ NEW VILLAS SECTION */}
+              <li>
+                <NavLink to="/villas" className={linkClass}>
+                  <MdVilla className="me-2" />
+                  Villas
                 </NavLink>
               </li>
 

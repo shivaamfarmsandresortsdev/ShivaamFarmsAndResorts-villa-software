@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./App.css";
@@ -10,6 +15,7 @@ import Footer from "./components/Footer/Footer.jsx";
 
 import Dashboard from "./pages/Dashboard";
 import Staff from "./pages/Staff.jsx";
+import Villas from "./pages/Villas.jsx";
 import Finance from "./pages/Finance.jsx";
 import Booking from "./pages/Booking.jsx";
 import Stocks from "./pages/Stocks.jsx";
@@ -22,12 +28,9 @@ import Login from "./pages/Login.jsx";
 import Protected from "./Protected.jsx";
 import NotAllowed from "./pages/NotAllowed.jsx";
 
-
 // ⭐ Layout wrapper for hiding sidebar/navbar on login page
 function Layout({ children }) {
   const location = useLocation();
-
-  // 🤍 Login page par Navbar & Sidebar hide honge
   const hideLayout = location.pathname === "/login";
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -57,7 +60,6 @@ const App = () => {
 
       <Layout>
         <Routes>
-
           {/* ⭐ Public Route */}
           <Route path="/login" element={<Login />} />
 
@@ -70,6 +72,7 @@ const App = () => {
               </Protected>
             }
           />
+
           <Route
             path="/staff"
             element={
@@ -78,6 +81,17 @@ const App = () => {
               </Protected>
             }
           />
+
+          {/* ✅ NEW VILLAS ROUTE */}
+          <Route
+            path="/villas"
+            element={
+              <Protected allowedRoles={["admin"]}>
+                <Villas />
+              </Protected>
+            }
+          />
+
           <Route
             path="/finance"
             element={
@@ -86,6 +100,7 @@ const App = () => {
               </Protected>
             }
           />
+
           <Route
             path="/booking"
             element={
@@ -94,6 +109,7 @@ const App = () => {
               </Protected>
             }
           />
+
           <Route
             path="/calendar"
             element={
@@ -111,6 +127,7 @@ const App = () => {
               </Protected>
             }
           />
+
           <Route
             path="/checkInForm"
             element={
@@ -137,7 +154,6 @@ const App = () => {
               </Protected>
             }
           />
-
         </Routes>
       </Layout>
     </Router>
