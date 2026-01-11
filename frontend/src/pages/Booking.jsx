@@ -438,7 +438,7 @@ const Booking = () => {
                               {b.address}
                             </td>
                             <td>
-                              <button
+                              {/* <button
                                 className="btn btn-sm btn-outline-primary me-1"
                                 onClick={() => {
                                   setSelectedBooking(b);
@@ -451,7 +451,7 @@ const Booking = () => {
                                 }}
                               >
                                 <FaEdit />
-                              </button>
+                              </button> */}
                               <button className="btn btn-sm btn-outline-danger px-2 me-1" onClick={() => handleDeleteBooking(b)}>
                                 <FaTrash />
                               </button>
