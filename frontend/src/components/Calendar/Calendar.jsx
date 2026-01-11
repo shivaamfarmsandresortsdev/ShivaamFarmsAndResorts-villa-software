@@ -18,7 +18,7 @@ const Calendar = ({
     "Krishna Villa",
     "Motvani Villa",
     "Bhatkar Villa",
-    "Hill Farm"
+    "Hill Farm Villa"
   ],
 }) => {
 

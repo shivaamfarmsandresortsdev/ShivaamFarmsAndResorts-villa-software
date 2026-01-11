@@ -43,7 +43,7 @@ const NewBooking = ({ onClose, onSave }) => {
     "Krishna Villa",
     "Motvani Villa",
     "Bhatkar villa",
-    "Hill farm"
+    "Hill Farm Villa"
   ];
 
   const [dateError, setDateError] = useState("");
