@@ -13,7 +13,7 @@ const villaCategories = {
   "Krishna Villa": { dimensions: "3 BHK", maxGuests: 15 },
   "Motvani Villa": { dimensions: "5 BHK", maxGuests: 15 },
   "Bhatkar Villa": { dimensions: "5 BHK", maxGuests: 15 },
-  "Hill Farm Villa": { dimensions: "5 BHK", maxGuests: 15 },
+  "Hill Farm": { dimensions: "5 BHK", maxGuests: 15 },
 };
 
 const villas = Object.keys(villaCategories);
