@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 import "./NewBooking.css";
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE || "http://localhost:5000";
+  import.meta.env.VITE_API_BASE ||
+  "https://shivaam-farms-and-resorts-villa-kynh.onrender.com";
 
 const NewBooking = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
