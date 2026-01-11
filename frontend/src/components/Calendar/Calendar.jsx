@@ -46,8 +46,9 @@ const Calendar = ({
     "#0C97E1", // complement of #F368E0
     "#EF537B", // complement of #10AC84
     "#0060BC", // complement of #FF9F43
-    "#C4E068", // complement of #341F97
+    "#84E068", // complement of #341F97
     "#038316ff", // complement of #341F97
+    "#738316ff", // complement of #341F97
   ]
   villas.forEach((villa, i) => {
     villaColors[villa] = colorPalette[i % colorPalette.length];
