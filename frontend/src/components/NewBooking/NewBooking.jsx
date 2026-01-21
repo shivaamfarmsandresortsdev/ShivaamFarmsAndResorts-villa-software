@@ -318,15 +318,13 @@ const NewBooking = ({ onClose, onSave }) => {
 
     /* ---- SAME LOGIC AS SINGLE BOOKING ---- */
     const recalcRow = (row) => {
-      // -------- Nights auto-calc (same as single booking) --------
+      // -------- Nights auto-calc --------
       if (row.checkIn && row.checkOut) {
         const d1 = new Date(row.checkIn);
         const d2 = new Date(row.checkOut);
 
         if (!isNaN(d1) && !isNaN(d2) && d2 > d1) {
-          row.nights = Math.round(
-            (d2 - d1) / (1000 * 60 * 60 * 24)
-          );
+          row.nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
         } else {
           row.nights = 0;
         }
@@ -342,10 +340,8 @@ const NewBooking = ({ onClose, onSave }) => {
         return;
       }
 
-
-      const total = base; // 🔥 base = total
+      const total = base; // 🔥 GST removed
       row.totalAmount = total;
-
 
       if (row.paymentCategory === "Advanced") {
         row.remainingAmount = Math.max(
@@ -361,12 +357,15 @@ const NewBooking = ({ onClose, onSave }) => {
     const updateRow = (index, field, value) => {
       const updated = [...rows];
 
+      // keep same behavior
       updated[index][field] =
         ["baseAmount", "advancedAmount", "guests"].includes(field)
-          ? Number(value)
+          ? value === ""
+            ? ""
+            : Number(value)
           : value;
 
-      // 🔥 Trigger recalculation for date & amount fields
+      // recalc
       if (
         [
           "checkIn",
@@ -383,15 +382,10 @@ const NewBooking = ({ onClose, onSave }) => {
       setRows(updated);
     };
 
-    // const addRow = () => {
-    //   setRows([...rows, { ...rows[0], guest: "", phone: "" }]);
-    // };
+    /* ---------------- SUBMIT (NOW SAME SYSTEM AS SINGLE) ---------------- */
+    const handleBulkSubmit = async (e) => {
+      e.preventDefault(); // ✅ popup submit system
 
-    // const removeRow = (i) => {
-    //   setRows(rows.filter((_, idx) => idx !== i));
-    // };
-
-    const handleBulkSubmit = async () => {
       const expandedBookings = [];
 
       for (const r of rows) {
@@ -433,265 +427,261 @@ const NewBooking = ({ onClose, onSave }) => {
         });
       }
 
-      const res = await fetch(`${API_BASE}/api/bookings/bulk`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookings: expandedBookings }),
-      });
-
-      const text = await res.text();
-
-      let body;
       try {
-        body = JSON.parse(text);
-      } catch {
-        console.error("Non-JSON response:", text);
+        const res = await fetch(`${API_BASE}/api/bookings/bulk`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookings: expandedBookings }),
+        });
+
+        const text = await res.text();
+
+        let body;
+        try {
+          body = JSON.parse(text);
+        } catch {
+          console.error("Non-JSON response:", text);
+          alert("Server error");
+          return;
+        }
+
+        if (!res.ok) {
+          alert(body.error || "Bulk booking failed");
+          return;
+        }
+
+        alert("Bulk booking created ✅");
+
+        await onSave(body.data);
+        onClose();
+      } catch (err) {
+        console.error("Bulk request failed:", err);
         alert("Server error");
-        return;
       }
-
-      if (!res.ok) {
-        alert(body.error || "Bulk booking failed");
-        return;
-      }
-
-      await onSave(body.data);
-      onClose();
-
     };
 
+    /* ---------------- UI (UNCHANGED) ---------------- */
     return (
-      <>
-        {rows.map((row, index) => (
-          <div key={index} className="row g-3 mb-4">
-
-            <div className="col-12 col-sm-6">
-              <label>Guest Name</label>
-              <input
-                className="form-control"
-                value={row.guest}
-                onChange={(e) => updateRow(index, "guest", e.target.value)}
-              />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Villa</label>
-              <VillaMultiSelect
-                options={villaOptions.filter(v => v !== "All Villas")}
-                value={row.villas}
-                onChange={(v) => updateRow(index, "villas", v)}
-              />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Phone</label>
-              <input
-                className="form-control"
-                value={row.phone}
-                onChange={(e) => updateRow(index, "phone", e.target.value)}
-              />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Check-in</label>
-              <input
-                type="date"
-                className="form-control"
-                value={row.checkIn}
-                min={today}
-                onChange={(e) =>
-                  updateRow(index, "checkIn", e.target.value)
-                }
-              />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Check-out</label>
-              <input
-                type="date"
-                className="form-control"
-                value={row.checkOut}
-                min={
-                  row.checkIn
-                    ? new Date(
-                      new Date(row.checkIn).getTime() + 86400000
-                    )
-                      .toISOString()
-                      .split("T")[0]
-                    : today
-                }
-                onChange={(e) =>
-                  updateRow(index, "checkOut", e.target.value)
-                }
-              />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Nights</label>
-              <input
-                className="form-control"
-                value={
-                  Number.isFinite(row.nights) && row.nights > 0
-                    ? `${row.nights} nights`
-                    : ""
-                }
-                readOnly
-              />
-
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Guests</label>
-              <input
-                type="number"
-                min="1"
-                className="form-control"
-                value={row.guests}
-                onChange={(e) => updateRow(index, "guests", e.target.value)}
-              />
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Base Amount (₹)</label>
-              <input
-                type="number"
-                className="form-control"
-                value={row.baseAmount}
-                onChange={(e) => updateRow(index, "baseAmount", e.target.value)}
-              />
-            </div>
-
-            {/* <div className="col-12 col-sm-6">
-              <label>GST Type</label>
-              <select
-                className="form-select"
-                value={row.gstType}
-                onChange={(e) => updateRow(index, "gstType", e.target.value)}
-              >
-                <option value="">Select</option>
-                <option value="CGST + SGST (9% + 9%)">CGST + SGST (9% + 9%)</option>
-                <option value="IGST (18%)">IGST (18%)</option>
-              </select>
-            </div> */}
-
-            <div className="col-12 col-sm-6">
-              <label>Payment Mode</label>
-              <select
-                className="form-select"
-                value={row.paymentMode}
-                onChange={(e) => updateRow(index, "paymentMode", e.target.value)}
-              >
-                <option value="">Select</option>
-                <option value="Cash">Cash</option>
-                <option value="Online">Online</option>
-              </select>
-            </div>
-
-            <div className="col-12 col-sm-6">
-              <label>Payment Category</label>
-              <div>
+      <form onSubmit={handleBulkSubmit}>
+        <>
+          {rows.map((row, index) => (
+            <div key={index} className="row g-3 mb-4">
+              <div className="col-12 col-sm-6">
+                <label>Guest Name</label>
                 <input
-                  type="radio"
-                  checked={row.paymentCategory === "Total"}
-                  onChange={() => updateRow(index, "paymentCategory", "Total")}
-                />{" "}
-                Total
+                  className="form-control"
+                  value={row.guest}
+                  onChange={(e) => updateRow(index, "guest", e.target.value)}
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Villa</label>
+                <VillaMultiSelect
+                  options={villaOptions.filter((v) => v !== "All Villas")}
+                  value={row.villas}
+                  onChange={(v) => updateRow(index, "villas", v)}
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Phone</label>
                 <input
-                  type="radio"
-                  className="ms-3"
-                  checked={row.paymentCategory === "Advanced"}
-                  onChange={() => updateRow(index, "paymentCategory", "Advanced")}
-                />{" "}
-                Advanced
+                  className="form-control"
+                  value={row.phone}
+                  onChange={(e) => updateRow(index, "phone", e.target.value)}
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Check-in</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={row.checkIn}
+                  min={today}
+                  onChange={(e) =>
+                    updateRow(index, "checkIn", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Check-out</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={row.checkOut}
+                  min={
+                    row.checkIn
+                      ? new Date(
+                        new Date(row.checkIn).getTime() + 86400000
+                      )
+                        .toISOString()
+                        .split("T")[0]
+                      : today
+                  }
+                  onChange={(e) =>
+                    updateRow(index, "checkOut", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Nights</label>
+                <input
+                  className="form-control"
+                  value={
+                    Number.isFinite(row.nights) && row.nights > 0
+                      ? `${row.nights} nights`
+                      : ""
+                  }
+                  readOnly
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Guests</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="form-control"
+                  value={row.guests}
+                  onChange={(e) => updateRow(index, "guests", e.target.value)}
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Base Amount (₹)</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={row.baseAmount}
+                  onChange={(e) => updateRow(index, "baseAmount", e.target.value)}
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Payment Mode</label>
+                <select
+                  className="form-select"
+                  value={row.paymentMode}
+                  onChange={(e) =>
+                    updateRow(index, "paymentMode", e.target.value)
+                  }
+                >
+                  <option value="">Select</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Online">Online</option>
+                </select>
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Payment Category</label>
+                <div>
+                  <input
+                    type="radio"
+                    checked={row.paymentCategory === "Total"}
+                    onChange={() =>
+                      updateRow(index, "paymentCategory", "Total")
+                    }
+                  />{" "}
+                  Total
+                  <input
+                    type="radio"
+                    className="ms-3"
+                    checked={row.paymentCategory === "Advanced"}
+                    onChange={() =>
+                      updateRow(index, "paymentCategory", "Advanced")
+                    }
+                  />{" "}
+                  Advanced
+                </div>
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Customer Payment (₹)</label>
+                <input
+                  className="form-control"
+                  value={
+                    row.paymentCategory === "Advanced"
+                      ? Number.isFinite(row.advancedAmount)
+                        ? row.advancedAmount
+                        : 0
+                      : Number.isFinite(row.totalAmount)
+                        ? row.totalAmount
+                        : 0
+                  }
+                  readOnly
+                />
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <label>Total Amount</label>
+                <input
+                  className="form-control"
+                  value={Number.isFinite(row.totalAmount) ? row.totalAmount : 0}
+                  readOnly
+                />
+              </div>
+
+              {row.paymentCategory === "Advanced" && (
+                <>
+                  <div className="col-12 col-sm-6">
+                    <label>Advanced Amount</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={row.advancedAmount}
+                      onChange={(e) =>
+                        updateRow(index, "advancedAmount", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className="col-12 col-sm-6">
+                    <label>Remaining</label>
+                    <input
+                      className="form-control"
+                      value={
+                        Number.isFinite(row.remainingAmount)
+                          ? row.remainingAmount
+                          : 0
+                      }
+                      readOnly
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="col-12 col-sm-6">
+                <label>Received By</label>
+                <input
+                  className="form-control"
+                  value={row.receivedBy}
+                  onChange={(e) =>
+                    updateRow(index, "receivedBy", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="col-12 d-flex justify-content-between">
+                {/* UI stays same */}
               </div>
             </div>
+          ))}
 
-            <div className="col-12 col-sm-6">
-              <label>Customer Payment (₹)</label>
-              <input
-                className="form-control"
-                value={
-                  row.paymentCategory === "Advanced"
-                    ? Number.isFinite(row.advancedAmount) ? row.advancedAmount : 0
-                    : Number.isFinite(row.totalAmount) ? row.totalAmount : 0
-                }
-
-                readOnly
-              />
-            </div>
-
-
-            <div className="col-12 col-sm-6">
-              <label>Total Amount</label>
-              <input
-                className="form-control"
-                value={Number.isFinite(row.totalAmount) ? row.totalAmount : 0}
-                readOnly
-              />
-            </div>
-
-            {row.paymentCategory === "Advanced" && (
-              <>
-                <div className="col-12 col-sm-6">
-                  <label>Advanced Amount</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={row.advancedAmount}
-                    onChange={(e) =>
-                      updateRow(index, "advancedAmount", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="col-12 col-sm-6">
-                  <label>Remaining</label>
-                  <input
-                    className="form-control"
-                    value={Number.isFinite(row.remainingAmount) ? row.remainingAmount : 0}
-                    readOnly
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="col-12 col-sm-6">
-              <label>Received By</label>
-              <input
-                className="form-control"
-                value={row.receivedBy}
-                onChange={(e) => updateRow(index, "receivedBy", e.target.value)}
-              />
-            </div>
-
-            <div className="col-12 d-flex justify-content-between">
-              {/* <button
-              type="button"
-              className="btn btn-outline-danger"
-              onClick={() => removeRow(index)}
-            >
-              Remove
-            </button> */}
-            </div>
+          <div className="col-12 d-flex justify-content-end gap-2">
+            {/* ✅ SAME BUTTON UI — only changed to submit */}
+            <button type="submit" className="btn btn-success">
+              Create Bulk Bookings
+            </button>
           </div>
-        ))}
-
-        <div className="col-12 d-flex justify-content-end gap-2">
-          {/* <button className="btn btn-outline-primary" onClick={addRow}>
-          ➕ Add Row
-        </button> */}
-          <button
-            type="button"
-            className="btn btn-success"
-            onClick={handleBulkSubmit}
-          >
-            Create Bulk Bookings
-          </button>
-
-        </div>
-      </>
+        </>
+      </form>
     );
   };
+
 
   return (
     <div className="new-booking-overlay" role="dialog" aria-modal="true">

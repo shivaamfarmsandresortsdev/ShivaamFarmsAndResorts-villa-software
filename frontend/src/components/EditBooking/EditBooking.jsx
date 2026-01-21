@@ -124,11 +124,13 @@ const EditBooking = ({ booking, onClose, onSave }) => {
     };
 
     try {
-      const res = await fetch(`https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/${formData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `https://shivaam-farms-and-resorts-villa-kynh.onrender.com/api/bookings/${formData.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
       const body = await res.json();
       if (!res.ok) {
         alert("Update error: " + (body.error || "server error"));
