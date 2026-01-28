@@ -18,7 +18,7 @@ import "./Booking.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://shivaam-farms-and-resorts-villa-kynh.onrender.com";
+  "https://shivaam-farms-and-resorts-villa-1.onrender.com";
 // ---------------- CSV Export ----------------
 const exportToCSV = (rows, filename) => {
   if (!rows.length) return;
@@ -139,7 +139,7 @@ const Booking = () => {
   const fetchBookings = async () => {
     try {
       const res = await fetch(
-        "https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings"
+        "https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings"
       );
       const json = await res.json();
       if (!json.data) return;
@@ -227,7 +227,7 @@ const Booking = () => {
 
     try {
       const response = await fetch(
-        `https://shivaam-farms-and-resorts-villa.onrender.com/api/bookings/${bookingId}`,
+        `https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings/${bookingId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

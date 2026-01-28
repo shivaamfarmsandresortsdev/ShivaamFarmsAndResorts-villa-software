@@ -44,13 +44,13 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const API_BASE = "https://shivaam-farms-and-resorts-villa-kynh.onrender.com";
+  const API_BASE = "https://shivaam-farms-and-resorts-villa-1.onrender.com";
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("https://shivaam-farms-and-resorts-villa-kynh.onrender.com/api/bookings?checked_in=false");
+        const res = await axios.get("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings?checked_in=false");
         const data = res.data.data || [];
         setBookings(data);
 

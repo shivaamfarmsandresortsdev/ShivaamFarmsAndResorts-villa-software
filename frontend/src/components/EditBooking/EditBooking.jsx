@@ -125,7 +125,7 @@ const EditBooking = ({ booking, onClose, onSave }) => {
 
     try {
       const res = await fetch(
-        `https://shivaam-farms-and-resorts-villa-kynh.onrender.com/api/bookings/${formData.id}`,
+        `https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings/${formData.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
