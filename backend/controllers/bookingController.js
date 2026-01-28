@@ -151,39 +151,59 @@ export const addBooking = async (req, res) => {
 /* Get all bookings */
 export const getAllBookings = async (req, res) => {
   try {
-    const { data, error } = await fetchAllBookings();
-    if (error) throw error;
+    const { data = [], error } = await fetchAllBookings();
+    if (error) {
+      console.error("FETCH ERROR:", error);
+      return res.status(500).json({ data: [] });
+    }
+    console.log("FETCHED BOOKINGS:", data);
+
 
     const grouped = Object.values(
-      data.reduce((acc, b) => {
-        const key = b.bulk_id || `single-${b.id}`; // 🔥 CRITICAL
+      (data || []).reduce((acc, b) => {
+        const key = b.bulk_id || `single-${b.id}`;
 
         if (!acc[key]) {
           acc[key] = {
             booking_id: key,
             bulk_id: b.bulk_id || null,
+
             guest: b.guest,
             phone: b.phone,
-            checkIn: b.check_in,
-            checkOut: b.check_out,
+            address: b.address,
+
+            check_in: b.check_in,
+            check_out: b.check_out,
             nights: b.nights,
             guests: b.guests,
+
             villas: [],
-            totalAmount: 0,
+
+            // ✅ MONEY FIELDS YOU CARE ABOUT
+            base_amount: 0,
+            total_amount: 0,
+            advanced_amount: 0,
+            remaining_amount: 0,
+
+            payment_mode: b.payment_mode,
+            payment_category: b.payment_category,
+            received_by: b.received_by,
+
             status: b.status,
-            paymentMode: b.payment_mode,
-            receivedBy: b.received_by,
             created_at: b.created_at,
           };
         }
 
         acc[key].villas.push(b.villa);
-        acc[key].totalAmount += Number(b.total_amount || 0);
+
+        acc[key].base_amount += Number(b.base_amount || 0);
+        acc[key].total_amount += Number(b.total_amount || 0);
+        acc[key].advanced_amount += Number(b.advanced_amount || 0);
+        acc[key].remaining_amount += Number(b.remaining_amount || 0);
 
         return acc;
       }, {})
     );
-
 
     res.status(200).json({ data: grouped });
   } catch (err) {
@@ -445,7 +465,7 @@ export const addBulkBookings = async (req, res) => {
 
 /* Delete bulk booking */
 export const deleteBulkBooking = async (req, res) => {
-    console.log("🔥 BULK DELETE HIT", req.params.bulk_id);
+  console.log("🔥 BULK DELETE HIT", req.params.bulk_id);
   const { bulk_id } = req.params;
 
   if (!bulk_id) {

@@ -1,9 +1,7 @@
-import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-console.log("🔍 Loading Supabase config...");
-console.log("👉 SUPABASE_URL:", process.env.SUPABASE_URL ? "Loaded" : "NOT LOADED");
-console.log("👉 SUPABASE_SERVICE_ROLE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "Loaded" : "NOT LOADED");
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+console.log("SUPABASE_KEY EXISTS:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 export const supabase = createClient(
   process.env.SUPABASE_URL,

@@ -113,7 +113,7 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
     num(
       b.total_amount ??
       b.totalAmount ??
-      b.base_amount ??
+      b.baseAmount ??
       b.baseAmount ??
       b.bulk_base_amount ??
       b.bulkBaseAmount

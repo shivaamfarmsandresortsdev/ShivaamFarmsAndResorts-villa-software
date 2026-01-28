@@ -24,12 +24,13 @@ const exportToCSV = (rows, filename) => {
   if (!rows.length) return;
 
   const excludedKeys = [
-    "gst_type",
-    "cgst_amount",
-    "sgst_amount",
-    "igst_amount",
-    "gst_amount",
+    "gstType",
+    "cgstAmount",
+    "sgstAmount",
+    "igstAmount",
+    "gstAmount",
   ];
+
 
   const headers = Object.keys(rows[0]).filter(
     (h) => !excludedKeys.includes(h)
@@ -145,39 +146,37 @@ const Booking = () => {
       if (!json.data) return;
 
       const normalized = json.data.map((b) => ({
-        id: b.booking_id || b.id,           // 👈 bulk or single
+        id: b.booking_id || b.id,
         bulk_id: b.bulk_id || null,
 
-        guest: b.guest,
-        phone: b.phone,
+        guest: b.guest ?? "",
+        phone: b.phone ?? "",
 
-        // 👇 normalize villas
         villas: Array.isArray(b.villas)
           ? b.villas
           : [b.villa],
 
-        checkIn: b.check_in || b.checkIn,
-        checkOut: b.check_out || b.checkOut,
-        nights: b.nights,
-        guests: b.guests,
+        checkIn: b.check_in,
+        checkOut: b.check_out,
+        nights: Number(b.nights) || 0,
+        guests: Number(b.guests) || 0,
 
-        status: b.status,
+        status: b.status ?? "",
 
-        base_amount: Number(b.base_amount || 0),
-        gst_type: b.gst_type || "",
-        cgst_amount: Number(b.cgst_amount || 0),
-        sgst_amount: Number(b.sgst_amount || 0),
-        igst_amount: Number(b.igst_amount || 0),
-        gst_amount: Number(b.gst_amount || 0),
-        total_amount: Number(b.total_amount || 0),
-        advanced_amount: Number(b.advanced_amount || 0),
-        remaining_amount: Number(b.remaining_amount || 0),
+        baseAmount: Number(b.base_amount) || 0,
+        gstType: b.gst_type ?? "",
+        totalAmount: Number(b.total_amount) || 0,
+        advancedAmount: Number(b.advanced_amount) || 0,
+        remainingAmount: Number(b.remaining_amount) || 0,
 
-        payment_mode: b.payment_mode,
-        payment_category: b.payment_category,
-        received_by: b.received_by,
-        address: b.address,
+        paymentMode: b.payment_mode ?? "-",
+        paymentCategory: b.payment_category ?? "-",
+        receivedBy: b.received_by ?? "-",
+
+        address: b.address ?? "",
       }));
+
+
 
       setBookings(
         normalized.sort(
@@ -399,43 +398,43 @@ const Booking = () => {
                         </td>
                         <td>
                           <span
-                            className={`badge rounded-pill px-3 py-2 ${b.payment_category === "Total" || Number(b.remaining_amount) === 0
+                            className={`badge rounded-pill px-3 py-2 ${b.paymentCategory === "Total" || Number(b.remainingAmount) === 0
                               ? "bg-success-subtle text-success"
                               : b.status === "Pending"
                                 ? "bg-warning-subtle text-warning"
                                 : "bg-primary-subtle text-primary"
                               }`}
                           >
-                            {b.payment_category === "Total" || Number(b.remaining_amount) === 0 ? "Confirmed" : b.status}
+                            {b.paymentCategory === "Total" || Number(b.remainingAmount) === 0 ? "Confirmed" : b.status}
                           </span>
                         </td>
-                        <td>{b.received_by || "-"}</td>
+                        <td>{b.receivedBy || "-"}</td>
                         {!isExecutive && (
                           <>
-                            <td>₹ {b.base_amount}</td>
-                            {/* <td>{b.gst_type}</td>
-                            <td>₹ {b.cgst_amount}</td>
-                            <td>₹ {b.sgst_amount}</td>
-                            <td>₹ {b.igst_amount}</td>
-                            <td>₹ {b.gst_amount}</td> */}
-                            <td>₹ {b.total_amount}</td>
-                            <td>₹ {b.advanced_amount}</td>
+                            <td>₹ {b.baseAmount || 0}</td>
+                            {/* <td>{b.gstType}</td>
+                            <td>₹ {b.cgstAmount}</td>
+                            <td>₹ {b.sgstAmount}</td>
+                            <td>₹ {b.igstAmount}</td>
+                            <td>₹ {b.gstAmount}</td> */}
+                            <td>₹ {b.totalAmount}</td>
+                            <td>₹ {b.advancedAmount || 0}</td>
                             <td>
-                              {b.payment_category === "Advanced"
-                                ? `₹ ${b.remaining_amount || 0}`
-                                : b.payment_category === "Total"
+                              {b.paymentCategory === "Advanced"
+                                ? `₹ ${b.remainingAmount}`
+                                : b.paymentCategory === "Total"
                                   ? "0"
                                   : "-"}
                             </td>
-                            <td>{b.payment_mode || "-"}</td>
-                            <td>{b.payment_category || "-"}</td>
+                            <td>{b.paymentMode || "-"}</td>
+                            <td>{b.paymentCategory ?? "-"}</td>
                             <td>
-                              {b.payment_category === "Advanced"
-                                ? `₹ ${b.advanced_amount || 0}`
-                                : `₹ ${b.total_amount || 0}`}
+                              {b.paymentCategory === "Advanced"
+                                ? `₹ ${b.advancedAmount || 0}`
+                                : `₹ ${b.totalAmount || 0}`}
                             </td>
                             <td style={{ maxWidth: "200px", whiteSpace: "normal" }}>
-                              {b.address}
+                              {b.address || "-"}
                             </td>
                             <td>
                               <button
@@ -495,7 +494,7 @@ const Booking = () => {
                 return acc;
               }, {})}
 
-              villas={["All Villas", "Sample Villa", "Khetan Villa", "Madan Villa", "Pandhari Villa", "Dormitory Villa", "Tidke Villa", "Ishan Villa", "Cottage Villa", "Krishna Villa", "Motvani Villa", "Bhatkar villa","Hill Farm"]}
+              villas={["All Villas", "Sample Villa", "Khetan Villa", "Madan Villa", "Pandhari Villa", "Dormitory Villa", "Tidke Villa", "Ishan Villa", "Cottage Villa", "Krishna Villa", "Motvani Villa", "Bhatkar villa", "Hill Farm"]}
               bookedByDate={bookings.reduce((acc, b) => {
                 if (b.checkIn && b.checkOut) {
                   const start = new Date(b.checkIn);
@@ -553,12 +552,14 @@ const Booking = () => {
             villa: selectedBooking.villas.join(", "),
             checkIn: selectedBooking.checkIn,
             checkOut: selectedBooking.checkOut,
-            baseAmount: selectedBooking.base_amount,
-            paymentCategory: selectedBooking.payment_category,
-            advancedAmount: selectedBooking.advanced_amount,
-            paymentMode: selectedBooking.payment_mode,
-            receivedBy: selectedBooking.received_by,
+            baseAmount: selectedBooking.baseAmount,
+            paymentCategory: selectedBooking.paymentCategory,
+            advancedAmount: selectedBooking.advancedAmount,
+            paymentMode: selectedBooking.paymentMode,
+            receivedBy: selectedBooking.receivedBy,
             status: selectedBooking.status,
+
+
 
             // all bookings with same bulk_id
             bookings: bookings.filter(

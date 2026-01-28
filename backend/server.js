@@ -20,9 +20,15 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ Health check
-app.get("/", (req, res) => {
-  res.send("✅ Backend is running and connected to Supabase!");
+app.get("/__supabase_test", async (req, res) => {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .limit(1);
+
+  res.json({ data, error });
 });
+
 
 // ✅ Mount your routes
 app.use("/staff", staffRoutes);
