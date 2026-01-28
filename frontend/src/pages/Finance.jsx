@@ -80,9 +80,8 @@ const Finance = () => {
       .then((res) => {
         if (Array.isArray(res.data)) {
           stockData = res.data.map((item) => ({
-            description: `${item.itemname || "Unnamed"} | ${item.villa || "N/A"} | ${
-              item.category || "N/A"
-            }`,
+            description: `${item.itemname || "Unnamed"} | ${item.villa || "N/A"} | ${item.category || "N/A"
+              }`,
             date: item.date || new Date().toISOString(),
             amount: Number(item.total_amount ?? item.price ?? 0),
             type: "loss",
@@ -107,14 +106,14 @@ const Finance = () => {
         const bookingArray = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data.data)
-          ? res.data.data
-          : [];
+            ? res.data.data
+            : [];
 
         bookingData = bookingArray.map((item) => ({
-          description: `${item.guest || "Unknown Guest"} | ${item.villa || "Villa"}`,
+          description: `${item.guest || "Unknown Guest"} | ${(item.villas || []).join(", ")}`,
           date: item.checkIn || item.created_at || new Date().toISOString(),
-          amount: Number(item.customer_payment) || 0,
-          customer_payment: Number(item.customer_payment) || 0,
+          amount: Number(item.total_amount) || 0,
+          customer_payment: Number(item.total_amount) || 0,
           advancedAmount: 0,
           remainingAmount: 0,
           type: "profit",
@@ -314,7 +313,7 @@ const Finance = () => {
           >
             Export CSV/Excel
           </button>
-        </div> 
+        </div>
       </div>
 
       <div className="row g-3 mb-4">
