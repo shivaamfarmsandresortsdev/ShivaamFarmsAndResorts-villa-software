@@ -48,7 +48,7 @@ const OverviewCharts = () => {
         bookings.forEach((b) => {
           const date = new Date(b.checkIn || b.created_at);
           const month = date.toLocaleString("default", { month: "short", year: "numeric" });
-          const amount = Number(b.customer_payment || 0); // Use customer_payment instead of amount/totalPrice
+          const amount = Number(b.total_amount || 0); // Use customer_payment instead of amount/totalPrice
           revenueByMonth[month] = (revenueByMonth[month] || 0) + amount;
         });
 
