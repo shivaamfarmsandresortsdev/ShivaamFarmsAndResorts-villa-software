@@ -210,19 +210,20 @@ const Calendar = ({
       {weekChunks.map((week, i) => (
         <div key={i} className="row text-center mt-2">
           {week.map((day, j) => {
-            const fullDate = day ? formatDate(day) : null;
+            const fullDate = day ? formatDate(day) : "";
             // const isBooked = fullDate && mergedBookedDates.includes(fullDate);
             const isSelected = fullDate && fullDate === selectedDate;
 
             // ✅ Filter dots based on selected villa
             const bookedVillas =
-              selectedVilla === "All Villas"
+              day &&
+              (selectedVilla === "All Villas"
                 ? Object.keys(bookedDatesByVilla).filter((villa) =>
                   bookedDatesByVilla[villa]?.includes(fullDate)
                 )
                 : bookedDatesByVilla[selectedVilla]?.includes(fullDate)
-                  ? [selectedVilla] // show dot only for that villa
-                  : [];
+                  ? [selectedVilla]
+                  : []);
 
             let classNames =
               "col border calendar-day rounded p-2 d-flex flex-column align-items-center justify-content-start";

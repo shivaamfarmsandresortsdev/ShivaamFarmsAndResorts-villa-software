@@ -34,9 +34,8 @@ const CalendarPage = () => {
 
           // ✅ Add all days between check-in & checkout
           while (currentDate < endDate) {
-            const formattedDate = currentDate
-              .toISOString()
-              .split("T")[0];
+            const formattedDate = currentDate.toLocaleDateString("en-CA");
+
 
             villaData[villa].push(formattedDate);
             currentDate.setDate(currentDate.getDate() + 1);
@@ -58,7 +57,7 @@ const CalendarPage = () => {
 
       <Calendar
         bookedDatesByVilla={bookedDatesByVilla}
-        onDateSelect={() => {}}
+        onDateSelect={() => { }}
       />
     </div>
   );
