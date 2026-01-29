@@ -12,14 +12,14 @@ const CalendarPage = () => {
         );
 
         const result = await res.json();
-        const data = result.data || [];
+
+        // ✅ FIXED
+        const data = Array.isArray(result) ? result : result.data || [];
 
         const villaData = {};
 
         data.forEach((booking) => {
           const villa = booking.villa;
-
-          // ✅ Use YOUR field names
           const checkIn = booking.checkIn || booking.check_in;
           const checkOut = booking.checkOut || booking.check_out;
 
@@ -32,16 +32,17 @@ const CalendarPage = () => {
           let currentDate = new Date(checkIn);
           let endDate = new Date(checkOut);
 
-          // ✅ Add all days between check-in & checkout
+          // checkout day excluded ✔
           while (currentDate < endDate) {
-            const formattedDate = currentDate.toLocaleDateString("en-CA");
-
+            const formattedDate =
+              currentDate.toLocaleDateString("en-CA");
 
             villaData[villa].push(formattedDate);
             currentDate.setDate(currentDate.getDate() + 1);
           }
         });
 
+        console.log("Booked Dates:", villaData); // debug
         setBookedDatesByVilla(villaData);
       } catch (error) {
         console.error("Error fetching bookings:", error);
@@ -57,7 +58,7 @@ const CalendarPage = () => {
 
       <Calendar
         bookedDatesByVilla={bookedDatesByVilla}
-        onDateSelect={() => { }}
+        onDateSelect={() => {}}
       />
     </div>
   );
