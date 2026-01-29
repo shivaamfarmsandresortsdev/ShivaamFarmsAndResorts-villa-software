@@ -17,31 +17,42 @@ const CalendarPage = () => {
         const villaData = {};
 
         data.forEach((booking) => {
-          const villa = booking.villa;
 
-          // ✅ Use YOUR field names
+          // ✅ SUPPORT single & multiple villas
+          const villas = booking.villas || [booking.villa];
+
           const checkIn = booking.checkIn || booking.check_in;
           const checkOut = booking.checkOut || booking.check_out;
 
-          if (!villa || !checkIn || !checkOut) return;
+          if (!checkIn || !checkOut) return;
 
-          if (!villaData[villa]) {
-            villaData[villa] = [];
-          }
+          villas.forEach((villa) => {
+            if (!villa) return;
 
-          let currentDate = new Date(checkIn);
-          let endDate = new Date(checkOut);
+            if (!villaData[villa]) {
+              villaData[villa] = [];
+            }
 
-          // ✅ Add all days between check-in & checkout
-          while (currentDate < endDate) {
-            const formattedDate = currentDate
-              .toISOString()
-              .split("T")[0];
+            let currentDate = new Date(checkIn);
+            let endDate = new Date(checkOut);
 
-            villaData[villa].push(formattedDate);
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
+            // ✅ Add all days between check-in & checkout
+            while (currentDate < endDate) {
+              const formattedDate =
+                `${currentDate.getFullYear()}-${String(
+                  currentDate.getMonth() + 1
+                ).padStart(2, "0")}-${String(
+                  currentDate.getDate()
+                ).padStart(2, "0")}`;
+
+              villaData[villa].push(formattedDate);
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+          });
+
         });
+
+        console.log("CALENDAR DATA:", villaData); // debug
 
         setBookedDatesByVilla(villaData);
       } catch (error) {
