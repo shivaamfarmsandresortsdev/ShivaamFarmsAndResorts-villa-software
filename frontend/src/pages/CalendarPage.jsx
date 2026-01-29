@@ -11,30 +11,41 @@ const CalendarPage = () => {
           "https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings"
         );
 
-        const { data } = await res.json();
+        const result = await res.json();
+        const data = result.data || [];
+
         const villaData = {};
 
         data.forEach((booking) => {
           const villa = booking.villa;
-          const checkIn = booking?.check_in;
-          const checkOut = booking?.check_out;
 
-          if (!villaData[villa]) villaData[villa] = [];
+          // ✅ Use YOUR field names
+          const checkIn = booking.checkIn || booking.check_in;
+          const checkOut = booking.checkOut || booking.check_out;
 
-          let current = new Date(checkIn);
-          let end = new Date(checkOut);
+          if (!villa || !checkIn || !checkOut) return;
 
-          // ✅ DO NOT include checkout date in booked dates
-          while (current < end) {
-            const formatted = current.toISOString().split("T")[0];
-            villaData[villa].push(formatted);
-            current.setDate(current.getDate() + 1);
+          if (!villaData[villa]) {
+            villaData[villa] = [];
+          }
+
+          let currentDate = new Date(checkIn);
+          let endDate = new Date(checkOut);
+
+          // ✅ Add all days between check-in & checkout
+          while (currentDate < endDate) {
+            const formattedDate = currentDate
+              .toISOString()
+              .split("T")[0];
+
+            villaData[villa].push(formattedDate);
+            currentDate.setDate(currentDate.getDate() + 1);
           }
         });
 
         setBookedDatesByVilla(villaData);
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
       }
     };
 
@@ -44,7 +55,11 @@ const CalendarPage = () => {
   return (
     <div>
       <h2 className="mb-3">Villa Calendar</h2>
-      <Calendar bookedDatesByVilla={bookedDatesByVilla} onDateSelect={() => {}} />
+
+      <Calendar
+        bookedDatesByVilla={bookedDatesByVilla}
+        onDateSelect={() => {}}
+      />
     </div>
   );
 };
