@@ -61,7 +61,7 @@ const RecentTransactions = () => {
 
               advancedAmount: Number(row.advanced_amount) || 0,
               remainingAmount: Number(row.remaining_amount) || 0,
-              customerPayment: Number(row.customer_payment) || 0,
+              customerPayment: Number(row.totalAmount || row.total_amount) || 0,
 
               gst_type: row.gst_type || "-",
               gst_amount: Number(row.gst_amount) || 0,

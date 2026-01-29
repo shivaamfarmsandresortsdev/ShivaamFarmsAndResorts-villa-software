@@ -160,7 +160,8 @@ const Finance = () => {
     // ✅ Revenue from Bookings
     const totalBookingRevenue = filteredData
       .filter((t) => t.source === "Booking")
-      .reduce((sum, t) => sum + (Number(t.customer_payment) || 0), 0);
+      .reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
+
 
     // ✅ Expenses from Stock
     const totalStockExpenses = filteredData
@@ -177,7 +178,7 @@ const Finance = () => {
     // Revenue chart data
     const bookingRevenue = filteredData
       .filter((t) => t.source === "Booking")
-      .map((t) => Number(t.customer_payment) || 0);
+      .map((t) => Number(t.total_amount) || 0);
 
     const bookingMonths = filteredData
       .filter((t) => t.source === "Booking")
@@ -236,7 +237,7 @@ const Finance = () => {
       "Payment Mode": t.paymentMode ?? "-",
       "Payment Category": t.paymentCategory ?? "-",
       "GST Type": t.gst_type ?? "-",
-      "GST Amount": Number(t.gst_amount ?? t.gst_amount),
+      "GST Amount": Number(t.gst_amount) || 0,
 
       "CGST Amount": Number(t.cgst_amount ?? 0),
       "SGST Amount": Number(t.sgst_amount ?? 0),
