@@ -110,25 +110,35 @@ const Finance = () => {
             : [];
 
         bookingData = bookingArray.map((item) => ({
-          description: `${item.guest || "Unknown Guest"} | ${(item.villas || []).join(", ")}`,
+          description: `${item.firstName || ""} ${item.lastName || ""} | ${item.villa || "Villa"}`,
+
           date: item.checkIn || item.created_at || new Date().toISOString(),
-          amount: Number(item.total_amount) || 0,
-          customer_payment: Number(item.total_amount) || 0,
-          advancedAmount: 0,
-          remainingAmount: 0,
+
+          // 💰 Customer payment
+          customer_payment: Number(item.totalAmount || item.total_amount || 0),
+
+          advancedAmount: Number(item.advanceAmount || 0),
+          remainingAmount: Number(item.remainingAmount || 0),
+
           type: "profit",
           status: item.status || "completed",
+
           receivedBy: item.received_by || "Customer",
-          paymentMode: item.payment_mode || "Online",
+          paymentMode: item.paymentMode || item.payment_mode || "Cash",
           paymentCategory: "Customer Payment",
+
           source: "Booking",
+
           gst_type: item.gst_type || "-",
-          gst_amount: Number(item.gst_amount) || 0,
-          cgst_amount: Number(item.cgst_amount) || 0,
-          sgst_amount: Number(item.sgst_amount) || 0,
-          igst_amount: Number(item.igst_amount) || 0,
-          total_amount: Number(item.customer_payment) || 0,
+          gst_amount: Number(item.gst_amount || 0),
+          cgst_amount: Number(item.cgst_amount || 0),
+          sgst_amount: Number(item.sgst_amount || 0),
+          igst_amount: Number(item.igst_amount || 0),
+
+          // ✅ used everywhere else
+          total_amount: Number(item.totalAmount || item.total_amount || 0),
         }));
+
 
         const combined = [...stockData, ...bookingData].sort(
           (a, b) => new Date(b.date) - new Date(a.date)
