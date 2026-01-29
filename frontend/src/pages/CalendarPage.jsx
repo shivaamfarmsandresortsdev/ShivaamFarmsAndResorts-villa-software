@@ -3,6 +3,7 @@ import Calendar from "../components/Calendar/Calendar";
 
 const CalendarPage = () => {
   const [bookedDatesByVilla, setBookedDatesByVilla] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -13,8 +14,10 @@ const CalendarPage = () => {
 
         const result = await res.json();
 
-        // ✅ FIXED
-        const data = Array.isArray(result) ? result : result.data || [];
+        // ✅ Works with: [], {data:[]}, {bookings:[]}
+        const data = Array.isArray(result)
+          ? result
+          : result.data || result.bookings || [];
 
         const villaData = {};
 
@@ -25,39 +28,44 @@ const CalendarPage = () => {
 
           if (!villa || !checkIn || !checkOut) return;
 
-          if (!villaData[villa]) {
-            villaData[villa] = [];
-          }
+          if (!villaData[villa]) villaData[villa] = [];
 
           let currentDate = new Date(checkIn);
           let endDate = new Date(checkOut);
 
-          // checkout day excluded ✔
+          // ✅ Checkout date NOT included
           while (currentDate < endDate) {
             const formattedDate =
-              currentDate.toLocaleDateString("en-CA");
+              currentDate.toLocaleDateString("en-CA"); // YYYY-MM-DD
 
             villaData[villa].push(formattedDate);
             currentDate.setDate(currentDate.getDate() + 1);
           }
         });
 
-        console.log("Booked Dates:", villaData); // debug
+        console.log("Booked Dates By Villa:", villaData);
+
         setBookedDatesByVilla(villaData);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching bookings:", error);
+        setLoading(false);
       }
     };
 
     fetchBookings();
   }, []);
 
+  if (loading) {
+    return <h3>Loading calendar...</h3>;
+  }
+
   return (
     <div>
       <h2 className="mb-3">Villa Calendar</h2>
 
       <Calendar
-        bookedDatesByVilla={bookedDatesByVilla}
+        bookedDatesByVilla={bookedDatesByVilla || {}}
         onDateSelect={() => {}}
       />
     </div>
