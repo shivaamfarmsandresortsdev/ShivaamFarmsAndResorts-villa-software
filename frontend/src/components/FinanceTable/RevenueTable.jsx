@@ -62,7 +62,7 @@ const RevenueTable = () => {
                 month: "short",
               });
               // ⭐ Use customer_payment as revenue
-              const amount = Number(booking.customer_payment || 0);
+              const amount = Number(booking.total_amount || 0);
               groupedData[label] = (groupedData[label] || 0) + amount;
             });
 
@@ -76,7 +76,7 @@ const RevenueTable = () => {
                 year: "numeric",
               });
               // ⭐ Use customer_payment as revenue
-              const amount = Number(booking.customer_payment || 0);
+              const amount = Number(booking.total_amount || 0);
               groupedData[label] = (groupedData[label] || 0) + amount;
             });
 
