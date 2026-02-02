@@ -5,12 +5,37 @@ import "./Invoice.css";
 const Invoice = ({ booking, onClose }) => {
   if (!booking) return null;
 
-  // 🔥 Normalize for single vs bulk booking
-  const villas = Array.isArray(booking.villas)
-    ? booking.villas
-    : booking.villa
+  // ✅ Normalize booking fields (SAFE VERSION)
+  const normalizedBooking = {
+    guest:
+      booking.guest ||
+      `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
+
+    phone: booking.phone || "-",
+
+    villas: Array.isArray(booking.villas)
+      ? booking.villas
+      : booking.villa
       ? [booking.villa]
-      : [];
+      : [],
+
+    checkIn: booking.checkIn || booking.check_in,
+    checkOut: booking.checkOut || booking.check_out,
+
+    amount:
+      Number(booking.base_amount) ||
+      Number(booking.totalAmount) ||
+      Number(booking.total_amount) ||
+      0,
+
+    paymentMode:
+      booking.payment_mode || booking.paymentMode || "Cash",
+
+    receivedBy:
+      booking.received_by || booking.receivedBy || "Admin",
+
+    guests: booking.guests || 1,
+  };
 
   const company = {
     name: "SHIVAAM FARMS & RESORTS",
@@ -19,384 +44,193 @@ const Invoice = ({ booking, onClose }) => {
     email: "shivaamfarmsandresorts@gmail.com",
   };
 
-  // ------------------------- GST TABLE BUILDER -------------------------
-  // const getGSTRows = () => {
-  //   const rows = [];
-
-  //   if (booking.gst_type === "CGST + SGST (9% + 9%)") {
-  //     rows.push({ label: "CGST (9%)", value: booking.cgst_amount });
-  //     rows.push({ label: "SGST (9%)", value: booking.sgst_amount });
-  //   }
-
-  //   if (booking.gst_type === "IGST (18%)") {
-  //     rows.push({ label: "IGST (18%)", value: booking.igst_amount });
-  //   }
-
-  //   rows.push({ label: "Total GST", value: booking.gst_amount });
-
-  //   return rows;
-  // };
-
-  // const gstRows = getGSTRows();
-
-  // ------------------------- PDF DOWNLOAD -------------------------
-  const handleDownload = (doc = null, silent = false) => {
-    if (!doc) doc = new jsPDF("p", "mm", "a4");
+  // ---------------- PDF DOWNLOAD ----------------
+  const handleDownload = () => {
+    const doc = new jsPDF("p", "mm", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    /* ---------------- WATERMARK ---------------- */
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(34);
+    /* WATERMARK */
+    doc.setFontSize(30);
     doc.setTextColor(220, 220, 220);
-    doc.text(
-      "SHIVAAM FARMS & RESORTS",
-      pageWidth / 2,
-      160,
-      { align: "center", angle: 42 }
-    );
+    doc.text("SHIVAAM FARMS & RESORTS", pageWidth / 2, 160, {
+      align: "center",
+      angle: 45,
+    });
 
-    /* ---------------- HEADER ---------------- */
-    doc.setTextColor(0, 100, 0); // Green color for company name
+    /* HEADER */
+    doc.setTextColor(0, 100, 0);
     doc.setFontSize(18);
-    doc.text("SHIVAAM FARMS & RESORTS", 15, 20);
+    doc.text(company.name, 15, 20);
 
     doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    doc.text("01, AB, Green Planet, Omkar Nagar", 15, 26);
-    doc.text("+91 7387750307 | shivaamfarmsandresorts@gmail.com", 15, 31);
+    doc.setTextColor(0);
+    doc.text(company.address, 15, 26);
+    doc.text(`${company.phone} | ${company.email}`, 15, 31);
 
-    // Using `new Date().toLocaleString()` for current date/time on the right
     doc.text(`Date: ${new Date().toLocaleString()}`, pageWidth - 80, 20);
-    doc.text(`Check-in: ${new Date(booking.checkIn).toLocaleDateString()}`, pageWidth - 80, 26);
-    doc.text(`Check-out: ${new Date(booking.checkOut).toLocaleDateString()}`, pageWidth - 80, 32);
-    doc.text(`Guests: ${booking.guests}`, pageWidth - 80, 38);
+    doc.text(
+      `Check-in: ${new Date(normalizedBooking.checkIn).toLocaleDateString()}`,
+      pageWidth - 80,
+      26
+    );
+    doc.text(
+      `Check-out: ${new Date(normalizedBooking.checkOut).toLocaleDateString()}`,
+      pageWidth - 80,
+      32
+    );
+    doc.text(`Guests: ${normalizedBooking.guests}`, pageWidth - 80, 38);
 
-    /* ---------------- GUEST DETAILS ---------------- */
+    /* GUEST DETAILS */
     let y = 48;
+    doc.setFontSize(11);
+    doc.text(`Guest: ${normalizedBooking.guest}`, 15, y);
+    y += 6;
+    doc.text(`Phone: ${normalizedBooking.phone}`, 15, y);
+    y += 6;
+    doc.text("Villas:", 15, y);
+    y += 6;
 
-    doc.setFont("helvetica", "bold");
-    // doc.text("Guest Details", 15, y); // Removed this line as it's not in the image but leaving the Y positioning
-
-    doc.setFont("helvetica", "normal");
-    y += 7;
-    doc.text(`Guest: ${booking.guest}`, 15, y);
-    y += 6;
-    // doc.text(`Email: ${booking.email}`, 15, y);
-    // y += 6;
-    doc.text(`Phone: ${booking.phone || "-"}`, 15, y);
-    y += 6;
-    doc.text(`Villas:`, 15, y);
-    y += 6;
-    villas.forEach((v) => {
+    normalizedBooking.villas.forEach((v) => {
       doc.text(`• ${v}`, 18, y);
       y += 5;
     });
 
-    /* ---------------- ITEM TABLE ---------------- */
-    y += 12;
-    doc.setFont("helvetica", "bold");
-    doc.setFillColor(212, 237, 218); // table-success color
+    /* TABLE HEADER */
+    y += 8;
+    doc.setFillColor(212, 237, 218);
     doc.rect(15, y, pageWidth - 30, 8, "F");
     doc.text("Description", 20, y + 6);
     doc.text("Rate (Rs.)", 100, y + 6);
     doc.text("Qty", 140, y + 6);
     doc.text("Subtotal (Rs.)", 165, y + 6);
 
-    /* item row */
+    /* ITEM ROW */
     y += 14;
-    // doc.setFont("helvetica", "normal");
-    // doc.text(booking.villa, 20, y);
-    // doc.text(`Rs. ${booking.base_amount}`, 105, y);;
-    // doc.text("1", 142, y);
-    // doc.text(`Rs. ${booking.base_amount}`, 170, y);
-    // Single consolidated line item (no villa names)
     doc.text("Villa Booking", 20, y);
-    doc.text(`Rs. ${Number(booking.base_amount).toFixed(2)}`, 105, y);
+    doc.text(`Rs. ${normalizedBooking.amount.toFixed(2)}`, 100, y);
     doc.text("1", 142, y);
-    doc.text(`Rs. ${Number(booking.base_amount).toFixed(2)}`, 170, y);
+    doc.text(`Rs. ${normalizedBooking.amount.toFixed(2)}`, 165, y);
 
-    y += 8;
-
-
-    /* ---------------- GST TABLE ---------------- */
-    // y += 15;
-
-    // // GST Details Header/Title
-    // doc.setFontSize(12);
-    // doc.text("GST Details", 15, y);
-    // y += 5; // move down after the title
-
-    // // Tax Header Row
-    // doc.setFont("helvetica", "bold");
-    // doc.setFillColor(255, 245, 204); // table-warning color
-    // doc.rect(15, y, pageWidth - 30, 8, "F");
-    // doc.text("Tax Type", 20, y + 6);
-    // doc.text("Amount (Rs.)", 165, y + 6);
-
-    // y += 14;
-    // doc.setFont("helvetica", "normal");
-
-    // // Auto GST rows (IGST/CGST+SGST, and Total GST)
-    // const rows = getGSTRows();
-    // rows.forEach((r) => {
-    //   doc.text(r.label, 20, y);
-    //   doc.text(`Rs. ${Number(r.value).toFixed(2)}`, 170, y); // Added '₹' and toFixed(2)
-    //   y += 8;
-    // });
-
-    // // FIX: Grand Total Row - This was the row missing from the image replication
-    // doc.setFont("helvetica", "bold");
-    // doc.setFillColor(220, 237, 247); // A light blue color for Grand Total row
-    // doc.rect(15, y, pageWidth - 30, 8, "F");
-    // doc.text("Grand Total", 20, y + 6);
-    // doc.text(`Rs. ${Number(booking.total_amount).toFixed(2)}`, 170, y + 6); // Use toFixed(2) for consistency
-
-    /* ---------------- GRAND TOTAL ---------------- */
+    /* GRAND TOTAL */
     y += 15;
-    doc.setFont("helvetica", "bold");
     doc.setFillColor(220, 237, 247);
     doc.rect(15, y, pageWidth - 30, 8, "F");
     doc.text("Grand Total", 20, y + 6);
-    doc.text(`Rs. ${Number(booking.base_amount).toFixed(2)}`, 170, y + 6);
+    doc.text(`Rs. ${normalizedBooking.amount.toFixed(2)}`, 165, y + 6);
 
-
-    /* ---------------- PAYMENT DETAILS ---------------- */
+    /* PAYMENT */
     y += 16;
-    doc.setFont("helvetica", "normal");
-    doc.text(`Payment Mode: ${booking.payment_mode}`, 15, y);
+    doc.text(`Payment Mode: ${normalizedBooking.paymentMode}`, 15, y);
     y += 6;
-    doc.text(`Received By: ${booking.received_by}`, 15, y);
-    // Removed Remaining amount line as it is not in the image.
-    // y += 6;
-    // doc.text(`Remaining: Rs. ${booking.remaining_amount}`, 15, y); 
+    doc.text(`Received By: ${normalizedBooking.receivedBy}`, 15, y);
 
-    /* ---------------- TERMS ---------------- */
+    /* TERMS */
     y += 12;
-    doc.setFont("helvetica", "bold");
-    doc.text("Terms and Conditions:", 15, y);
-
-    doc.setFont("helvetica", "normal");
-    y += 6;
-    const terms = [
-      // "For security, 5 member Aadhar cards are required during check-in. They will be returned during check-out.",
-      "1. Check-in time is 1:00 PM and check-out time is 11:00 AM. Early check-in or late check-out is subject to availability and may incur additional charges.",
-      "2. Guests are responsible for any damage caused to villa property, furniture, fixtures, or electrical appliances during their stay.",
-      "3. Outside food delivery is strictly prohibited unless written permission is granted by management.",
-      "4. Loud music is not allowed after 10:00 PM as per local regulations. Guests must maintain decorum and avoid disturbing other residents.",
-      "5. Pool usage is at the guest’s own risk. Children must be accompanied by adults at all times.",
-      "6. Management is not responsible for loss of personal belongings, valuables, or unattended items."
-    ];
-
-    doc.text(terms, 15, y, { maxWidth: 180 });
-
-
-    /* ---------------- FOOTER ---------------- */
-    doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("Thank you for visiting!", pageWidth / 2, 290, { align: "center" });
+    doc.text("Terms and Conditions:", 15, y);
+    y += 6;
 
-    /* SAVE */
-    if (!silent) {
-      doc.save(`Invoice_${booking.guest}_${villas.length}_Villas.pdf`);
-    }
-    return doc;
+    doc.text(
+      [
+        "1. Check-in time is 1:00 PM and check-out time is 11:00 AM.",
+        "2. Guests are responsible for any damages during stay.",
+        "3. Outside food delivery is not allowed.",
+        "4. Loud music not allowed after 10:00 PM.",
+        "5. Pool usage at guest's own risk.",
+      ],
+      15,
+      y
+    );
 
-  };
+    /* FOOTER */
+    doc.text("Thank you for visiting!", pageWidth / 2, 290, {
+      align: "center",
+    });
 
-  // ------------------------- SHARE VIA WHATSAPP -------------------------
-  const handleShareWhatsApp = async () => {
-    try {
-      // 1️⃣ Validate phone number
-      if (!booking.phone) {
-        alert("No phone number found for this booking");
-        return;
-      }
-
-      // WhatsApp requires digits only + country code
-      const phone = booking.phone.replace(/\D/g, "");
-
-      if (phone.length < 10) {
-        alert("Invalid phone number");
-        return;
-      }
-
-      // 2️⃣ Generate invoice (backend)
-      const res = await fetch(
-        `/api/bookings/send-invoice/${booking.id}`,
-        { method: "POST" }
-      );
-
-
-      if (!res.ok) {
-        throw new Error("Backend error");
-      }
-
-      const { publicUrl } = await res.json();
-
-      if (!publicUrl) {
-        alert("Failed to generate invoice link");
-        return;
-      }
-
-      // 3️⃣ Format dates nicely
-      const formatDate = (d) =>
-        new Date(d).toLocaleDateString("en-IN");
-
-      // 4️⃣ WhatsApp message with invoice summary
-      const message = `
-🧾 Booking Invoice
-━━━━━━━━━━━━━━
-👤 Guest: ${booking.guest}
-🏡 Villas:
-${villas.map(v => `• ${v}`).join("\n")}
-📅 Check-in: ${formatDate(booking.checkIn)}
-📅 Check-out: ${formatDate(booking.checkOut)}
-💰 Amount: ₹${Number(booking.base_amount).toFixed(2)}
-
-📎 Download Invoice:
-${publicUrl}
-
-Thank you for booking with Shivaam Farms & Resorts 🌿
-    `.trim();
-
-      // 5️⃣ Open WhatsApp to BOOKING NUMBER
-      window.open(
-        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-
-    } catch (err) {
-      console.error("WhatsApp share failed:", err);
-      alert("Error sharing invoice on WhatsApp");
-    }
+    doc.save(
+      `Invoice_${normalizedBooking.guest}_${normalizedBooking.villas.length}_Villas.pdf`
+    );
   };
 
   return (
     <div className="invoice-overlay">
-      <div className="invoice-container shadow-lg rounded-3 p-4">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4 className="fw-bold text-success">Invoice</h4>
-          <button className="btn btn-outline-danger" onClick={onClose}>✕ Close</button>
+      <div className="invoice-container shadow p-4">
+        <div className="d-flex justify-content-between mb-3">
+          <h4 className="text-success fw-bold">Invoice</h4>
+          <button className="btn btn-outline-danger" onClick={onClose}>
+            ✕ Close
+          </button>
         </div>
 
-        {/* COMPANY HEADER */}
-        <h5 className="fw-bold text-center text-success">
-          {company.name}
-        </h5>
-        <p className="text-center small text-muted mb-3">
-          {company.address} | {company.phone}
-        </p>
+        <h5 className="text-center text-success">{company.name}</h5>
+        <p className="text-center small">{company.address}</p>
 
-        {/* GUEST + BOOKING DETAILS */}
         <div className="row mb-3">
           <div className="col-md-6">
-            <p><strong>Guest:</strong> {booking.guest}</p>
-            {/* <p><strong>Email:</strong> {booking.email}</p> */}
-            <p><strong>Phone:</strong> {booking.phone || "-"}</p>
-            <p><strong>Villas:</strong></p>
-            {villas.map((v, i) => (
+            <p>
+              <strong>Guest:</strong> {normalizedBooking.guest}
+            </p>
+            <p>
+              <strong>Phone:</strong> {normalizedBooking.phone}
+            </p>
+            <p>
+              <strong>Villas:</strong>
+            </p>
+            {normalizedBooking.villas.map((v, i) => (
               <div key={i}>🏠 {v}</div>
             ))}
           </div>
 
           <div className="col-md-6 text-md-end">
-            <p><strong>Date:</strong> {new Date().toLocaleString()}</p>
-            <p><strong>Check-in:</strong> {new Date(booking.checkIn).toLocaleDateString()}</p>
-            <p><strong>Check-out:</strong> {new Date(booking.checkOut).toLocaleDateString()}</p>
-            <p><strong>Guests:</strong> {booking.guests}</p>
+            <p>
+              <strong>Check-in:</strong>{" "}
+              {new Date(normalizedBooking.checkIn).toLocaleDateString()}
+            </p>
+            <p>
+              <strong>Check-out:</strong>{" "}
+              {new Date(normalizedBooking.checkOut).toLocaleDateString()}
+            </p>
+            <p>
+              <strong>Guests:</strong> {normalizedBooking.guests}
+            </p>
           </div>
         </div>
 
-        {/* ITEM TABLE */}
-        <table className="table table-bordered text-center align-middle mb-4">
+        <table className="table table-bordered text-center">
           <thead className="table-success">
             <tr>
               <th>Description</th>
-              <th>Rate (₹)</th>
+              <th>Rate</th>
               <th>Qty</th>
-              <th>Subtotal (₹)</th>
+              <th>Subtotal</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{booking.villa}</td>
-              <td>{booking.base_amount}</td>
+              <td>Villa Booking</td>
+              <td>{normalizedBooking.amount}</td>
               <td>1</td>
-              <td>{booking.base_amount}</td>
+              <td>{normalizedBooking.amount}</td>
             </tr>
           </tbody>
         </table>
 
-        {/* GST TABLE */}
-        {/* <h6 className="fw-bold mb-2">GST Details</h6>
-        <table className="table table-bordered text-center align-middle">
-          <thead className="table-warning">
-            <tr>
-              <th>Tax Type</th>
-              <th>Amount (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {gstRows.map((row, idx) => (
-              <tr key={idx} className={idx === gstRows.length - 1 ? "table-info fw-bold" : ""}>
-                <td>{row.label}</td>
-                <td>₹{row.value.toFixed(2)}</td>
-              </tr>
-            ))}
-            <tr className="table-secondary fw-bold">
-              <td>Grand Total</td>
-              <td>₹{booking.total_amount}</td>
-            </tr>
-          </tbody>
-        </table> */}
-
         <p className="fw-bold text-end">
-          Grand Total: ₹{Number(booking.base_amount).toFixed(2)}
+          Grand Total: ₹{normalizedBooking.amount.toFixed(2)}
         </p>
 
-        {/* EXTRA INFO */}
-        <p className="mt-3"><strong>Payment Mode:</strong> {booking.payment_mode}</p>
-        <p><strong>Received By:</strong> {booking.received_by}</p>
+        <p>
+          <strong>Payment Mode:</strong> {normalizedBooking.paymentMode}
+        </p>
+        <p>
+          <strong>Received By:</strong> {normalizedBooking.receivedBy}
+        </p>
 
-        {/* TERMS */}
-        <div className="mt-4 small">
-          <p className="fw-bold">Terms and Conditions:</p>
-
-          {/* <p>For security, 5 member Aadhar cards are required during check-in. They will be returned during check-out.</p> */}
-
-          <p>Check-in time is 1:00 PM and check-out time is 11:00 AM. Early check-in or late check-out is subject to availability and may incur additional charges.</p>
-
-          <p>Guests are responsible for any damage caused to villa property, furniture, fixtures, or electrical appliances during their stay.</p>
-
-          <p>Outside food delivery is strictly prohibited unless written permission is granted by management.</p>
-
-          <p>Loud music is not allowed after 10:00 PM as per local regulations. Guests must maintain decorum and avoid disturbing other residents.</p>
-
-          <p>Pool usage is at the guest’s own risk. Children must be accompanied by adults at all times.</p>
-
-          <p>Management is not responsible for loss of personal belongings, valuables, or unattended items.</p>
-        </div>
-
-
-        {/* DOWNLOAD BUTTON */}
         <div className="text-center mt-4">
-          <button
-            className="btn btn-success"
-            onClick={() => {
-              console.log("DOWNLOAD BUTTON CLICKED");
-              handleDownload();
-            }}
-          >
+          <button className="btn btn-success" onClick={handleDownload}>
             ⬇️ Download Invoice
           </button>
-
         </div>
-        <div className="text-center mt-2">
-          <button className="btn btn-primary" onClick={handleShareWhatsApp}>
-            📤 Share via WhatsApp
-          </button>
-        </div>
-
       </div>
     </div>
   );
