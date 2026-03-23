@@ -30,6 +30,11 @@ app.get("/__supabase_test", async (req, res) => {
 });
 
 
+app.get("/",(req,res)=>{
+  res.send("Server is running");
+})
+
+
 // ✅ Mount your routes
 app.use("/staff", staffRoutes);
 app.use("/api/stocks", stockRoutes);
