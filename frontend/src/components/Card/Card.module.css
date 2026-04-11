@@ -1,0 +1,13 @@
+.cardMain{
+    background-color: #f8f8f8 ;
+}
+
+.cardHeading{
+    display: flex;
+    justify-content: space-between;
+    /* align-items: center; */
+}
+
+.cardText{
+    font-size: 14px;
+}

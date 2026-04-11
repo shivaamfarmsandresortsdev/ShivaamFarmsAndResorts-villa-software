@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Forum&family=Geist:wght@100..900&family=Mulish:ital,wght@0,200..1000;1,200..1000&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+body{
+  font-family: "Geist", sans-serif;
+  
+}
+.main-content {
+  padding-top: 70px; /* for navbar height */
+  padding-bottom: 70px;
+  transition: margin-left 0.3s ease;
+}
+
+/* On desktop, leave space for sidebar */
+@media (min-width: 768px) {
+  .main-content {
+    margin-left: 250px;
+  }
+}
+
+/* On mobile, sidebar overlaps so no margin */
+@media (max-width: 767px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* Custom light green active tab */
+.nav-pills .nav-link.custom-active {
+  background-color: #1F4529 !important; /* light green */
+  color: #000 !important; /* black text for contrast */
+  font-weight: 500;
+}
+
+/* Active tab = gray bg + white text */
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  background-color: #1F4529 !important; /* gray */
+  color: #fff !important; /* white text */
+  font-weight: 500;
+}
+
+/* Inactive tab = green text */
+.nav-pills .nav-link {
+  color: #1F4529 !important; /* dark green text */
+}
+
+/* Hover (inactive only) = green bg + white text */
+.nav-pills .nav-link:not(.active):hover {
+  background-color: #1F4529 !important; /* dark green */
+  color: #fff !important;
+}
+
+/* Apply only to this table */
+.recent-transactions-table table {
+  font-size: 0.9rem;   /* slightly smaller text on mobile */
+}
+
+@media (max-width: 576px) {
+  .recent-transactions-table th,
+  .recent-transactions-table td {
+    white-space: normal; /* allow wrapping instead of overflow */
+    word-break: break-word;
+  }
+}
+

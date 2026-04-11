@@ -1,0 +1,112 @@
+.calendar-day {
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.villa-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 160px;
+  min-height: 120px;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  animation: popupIn 0.25s ease;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@keyframes popupIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.popup-header {
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.popup-villas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  gap: 4px;
+}
+
+.popup-villa-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  padding-left: 10px;
+}
+
+.popup-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.popup-villa-name {
+  font-weight: 600;
+}
+
+.calendar-section {
+  position: relative;
+}
+
+/* For screens ≤ 768px */
+@media (max-width: 768px) {
+  .calendar-section .d-flex.align-items-center.gap-2 {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100%;
+  }
+
+  .calendar-section select.form-select {
+    width: 100% !important;
+    min-width: unset !important;
+    font-size: 15px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  /* Stack dropdowns vertically */
+  .calendar-section .d-flex.align-items-center.gap-2 {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100%;
+    gap: 12px !important;
+  }
+
+  /* Full-width dropdowns */
+  .calendar-section select.form-select {
+    width: 100% !important;
+    min-width: unset !important;
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+
+  /* Reduce spacing of arrows */
+  .calendar-section button.btn-outline-secondary {
+    padding: 5px 10px !important;
+  }
+}
+

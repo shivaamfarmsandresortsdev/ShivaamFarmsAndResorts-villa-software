@@ -1,0 +1,119 @@
+.new-booking-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 90%;
+  background: transparent !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  overflow-y: auto;
+  padding: 1rem;
+  /* allow scrolling when content is taller than viewport */
+}
+
+.new-booking-page {
+  width: 100%;
+  max-width: 1200px;
+  /* ⬅️ widened from 720px */
+  box-sizing: border-box;
+  max-height: calc(100vh - 120px);
+  overflow: auto !important;
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.34s ease both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card inner padding */
+.new-booking-page .card {
+  padding: 1.25rem;
+  border-radius: 12px;
+}
+
+/* Slightly smaller labels on small screens */
+@media (max-width: 768px) {
+  .new-booking-page {
+    max-width: 92%;
+  }
+
+  .new-booking-page .card {
+    padding: 1rem;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 480px) {
+  .new-booking-page {
+    max-width: 100%;
+    margin: 0 0.5rem;
+  }
+
+  .new-booking-page .card {
+    padding: 0.85rem;
+  }
+
+  .new-booking-page .form-label {
+    font-size: 0.92rem;
+  }
+
+  /* Make action buttons full width stacked on tiniest screens */
+  .new-booking-page .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .new-booking-page .form-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Keep close button visually pleasant */
+/* .btn-close {
+  border: none;
+  background: transparent;
+  color: black !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  cursor: pointer;
+} */
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Keep selected villa names in one line */
+.villa-multiselect-display,
+.new-booking-page .form-control {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
