@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const RecentTransactions = () => {
+const RecentTransactions = ({ transactions: transactionsProp }) => {
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [fromDate, setFromDate] = useState("");
@@ -12,11 +12,19 @@ const RecentTransactions = () => {
   const rowsPerPage = 20;
 
   useEffect(() => {
+    if (transactionsProp) {
+      setTransactions(transactionsProp);
+      setFilteredTransactions(transactionsProp);
+    }
+  }, [transactionsProp]);
+
+  useEffect(() => {
+    if (transactionsProp) return; // Skip fetch if data is provided via props
     let stockData = [];
     // let bookingData = [];
 
     axios
-      .get("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/stocks")
+      .get("http://localhost:5000/api/stocks")
       .then((res) => {
         if (Array.isArray(res.data)) {
           stockData = res.data.map((item) => ({
@@ -38,7 +46,7 @@ const RecentTransactions = () => {
             total_amount: Number(item.price) || 0, // still keeping total_amount for summary
           }));
         }
-        return axios.get("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings");
+        return axios.get("http://localhost:5000/api/bookings");
       })
       .then((res) => {
         const bookingArray = Array.isArray(res.data)

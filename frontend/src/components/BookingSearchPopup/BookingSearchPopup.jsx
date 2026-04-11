@@ -14,6 +14,7 @@ const baseColors = [
   "#2EC4B6",
   "#E71D36",
   "#9B5DE5",
+  
 ];
 
 // Generate a color for any villa number
@@ -44,13 +45,13 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const API_BASE = "https://shivaam-farms-and-resorts-villa-1.onrender.com";
+  const API_BASE = "http://localhost:5000";
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings?checked_in=false");
+        const res = await axios.get("http://localhost:5000/api/bookings?checked_in=false");
         const data = res.data.data || [];
         setBookings(data);
 

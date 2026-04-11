@@ -10,7 +10,7 @@ const EditBooking = ({ booking, onClose, onSave }) => {
     phone: "",
     address: "",
     // aadhar: "",
-    villa: "",
+    villas: [],
     checkIn: "",
     checkOut: "",
     nights: 0,
@@ -27,6 +27,22 @@ const EditBooking = ({ booking, onClose, onSave }) => {
     remainingAmount: 0,
   });
 
+
+  const options = [
+    "Sample Villa",
+    "Khetan Villa",
+    "Madan Villa",
+    "Pandhari Villa",
+    "Dormitory Villa",
+    "Tidke Villa",
+    "Ishan Villa",
+    "Cottage Villa",
+    "Krishna Villa",
+    "Motvani Villa",
+    "Bhatkar villa",
+    "Hill Farm",
+  "Wood Farm"];
+
   useEffect(() => {
     if (!booking) return;
     // booking from API is snake_case from DB - map to camelCase for form
@@ -37,7 +53,7 @@ const EditBooking = ({ booking, onClose, onSave }) => {
       phone: booking.phone ?? "",
       address: booking.address ?? "",
       // aadhar: booking.aadhar ? booking.aadhar.replace(/\s/g, "") : "",
-      villa: booking.villa ?? "",
+      villas: booking.villas ?? [],
       checkIn: booking.checkIn ?? "",
       checkOut: booking.checkOut ?? "",
       nights: booking.nights ?? 0,
@@ -95,28 +111,38 @@ const EditBooking = ({ booking, onClose, onSave }) => {
       [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
     }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // prepare normalized payload (camelCase)
+
+    // ✅ Extract numeric ID
+    let bookingId = formData.id;
+
+    if (typeof bookingId === "string" && bookingId.includes("-")) {
+      bookingId = bookingId.split("-")[1];
+    }
+
+    bookingId = Number(bookingId);
+
+    if (isNaN(bookingId)) {
+      alert("Invalid booking ID");
+      return;
+    }
+
     const payload = {
-      id: formData.id,
+      id: bookingId, // send numeric id
       guest: formData.guest,
-      // email: formData.email,
       phone: formData.phone || null,
       address: formData.address || null,
-      // aadhar: formData.aadhar.replace(/\s/g, ""),
-      villa: formData.villa,
+     villa: formData.villas[0] || "",
       checkIn: formData.checkIn,
       checkOut: formData.checkOut,
       nights: Number(formData.nights || 0),
       guests: Number(formData.guests || 1),
-
       baseAmount: Number(formData.baseAmount || 0),
-      // gstType: formData.gstType,
-      advancedAmount: formData.paymentCategory === "Total"
-        ? booking.advanced_amount   // ← keep original
-        : Number(formData.advancedAmount || 0),
+      advancedAmount:
+        formData.paymentCategory === "Total"
+          ? booking.advanced_amount
+          : Number(formData.advancedAmount || 0),
       paymentCategory: formData.paymentCategory,
       paymentMode: formData.paymentMode,
       receivedBy: formData.receivedBy,
@@ -125,17 +151,21 @@ const EditBooking = ({ booking, onClose, onSave }) => {
 
     try {
       const res = await fetch(
-        `https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings/${formData.id}`,
+        `http://localhost:5000/api/bookings/${bookingId}`, // ✅ fixed here
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        });
+        }
+      );
+
       const body = await res.json();
+
       if (!res.ok) {
         alert("Update error: " + (body.error || "server error"));
         return;
       }
+
       alert("Booking updated");
       onSave(body.data);
       onClose();
@@ -144,6 +174,63 @@ const EditBooking = ({ booking, onClose, onSave }) => {
       alert("Could not update booking");
     }
   };
+
+
+  const VillaMultiSelect = ({ options, value = [], onChange }) => {
+    const [open, setOpen] = React.useState(false);
+    const ref = React.useRef();
+
+    React.useEffect(() => {
+      const handleClickOutside = (e) => {
+        if (ref.current && !ref.current.contains(e.target)) {
+          setOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const selectVilla = (villa) => {
+      onChange([villa]); // ✅ Only one villa
+      setOpen(false);    // auto close dropdown
+    };
+
+    return (
+      <div ref={ref} className="position-relative">
+        <div
+          className="form-control"
+          onClick={() => setOpen(!open)}
+          style={{ cursor: "pointer" }}
+        >
+          {value.length > 0 ? value[0] : "Select Villa"}
+        </div>
+
+        {open && (
+          <div
+            className="border rounded shadow-sm bg-white mt-1 p-2 position-absolute w-100"
+            style={{ zIndex: 1000, maxHeight: 200, overflowY: "auto" }}
+          >
+            {options.map((villa) => (
+              <div key={villa} className="form-check">
+                <input
+                  className="form-check-input"
+                  type="radio"
+                  name="villa"
+                  checked={value[0] === villa}
+                  onChange={() => selectVilla(villa)}
+                />
+                <label className="form-check-label">
+                  {villa}
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
 
   return (
     <div className="new-booking-overlay">
@@ -159,11 +246,21 @@ const EditBooking = ({ booking, onClose, onSave }) => {
               <label>Guest</label>
               <input name="guest" value={formData.guest} onChange={handleChange} className="form-control" />
             </div>
+            <div className="col-12 col-sm-6 position-relative">
+              <label className="form-label">Villas</label>
 
-            <div className="col-12 col-sm-6">
-              <label>Villa</label>
-              <input name="villa" value={formData.villa} onChange={handleChange} className="form-control" />
+              <VillaMultiSelect
+                options={options || []}
+                value={formData.villas || []}
+                onChange={(newVillas) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    villas: newVillas,
+                  }))
+                }
+              />
             </div>
+
 
             <div className="col-12 col-sm-6">
               <label>Address</label>

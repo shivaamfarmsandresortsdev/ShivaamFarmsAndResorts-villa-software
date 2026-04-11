@@ -14,14 +14,17 @@ const Staff = () => {
   const [showModal, setShowModal] = useState(false);
   const [confirmDeleteIndex, setConfirmDeleteIndex] = useState(null);
   const [search, setSearch] = useState("");
-
+ const [loading, setLoading] = useState(true);
   // Fetch staff
   const fetchStaff = async () => {
     try {
+      setLoading(true);
       const data = await getStaff();
       setStaff(data);
     } catch (err) {
       toast.error(`Failed to fetch staff: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,6 +45,7 @@ const Staff = () => {
     }
 
     try {
+         setLoading(true);
       if (editIndex !== null) {
         await updateStaff(staff[editIndex].id, form);
         toast.success("Staff updated!");
@@ -55,6 +59,8 @@ const Staff = () => {
       fetchStaff();
     } catch (err) {
       toast.error(`Save failed: ${err.message}`);
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -66,14 +72,17 @@ const Staff = () => {
   };
 
   // Delete
-  const handleDelete = async () => {
+ const handleDelete = async () => {
     try {
+      setLoading(true);
       await deleteStaff(staff[confirmDeleteIndex].id);
       toast.success("Staff deleted!");
       setConfirmDeleteIndex(null);
-      fetchStaff();
+      await fetchStaff();
     } catch (err) {
       toast.error(`Delete failed: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,6 +114,20 @@ const Staff = () => {
       s.role.toLowerCase().includes(search.toLowerCase())
   );
 
+
+   if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-success" role="status"></div>
+          <p className="mt-3 fw-semibold">Loading Staffs...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="container my-4">
       <h2>Staff Management</h2>

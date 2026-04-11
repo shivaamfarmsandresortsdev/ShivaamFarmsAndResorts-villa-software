@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaUserFriends,
@@ -14,11 +15,14 @@ import NewBooking from "../components/NewBooking/NewBooking";
 import EditBooking from "../components/EditBooking/EditBooking";
 import EditBulkBooking from "../components/EditBulkBooking/EditBulkBooking";
 import Invoice from "../components/Invoice/Invoice";
+
 import "./Booking.css";
+
+
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://shivaam-farms-and-resorts-villa-1.onrender.com";
+  "http://localhost:5000";
 // ---------------- CSV Export ----------------
 const exportToCSV = (rows, filename) => {
   if (!rows.length) return;
@@ -74,6 +78,8 @@ const Booking = () => {
   const [showInvoice, setShowInvoice] = useState(false);
 
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+const navigate = useNavigate();
 
   const role = localStorage.getItem("role");
   const isExecutive = role === "executive";
@@ -118,89 +124,86 @@ const Booking = () => {
     ? Math.round((currentGuests / (bookings.length * 4)) * 100)
     : 0;
 
-  // Mock previous month data
-  // const prevMonthBookings = 10;
-  // const prevMonthGuests = 20;
-  // const prevMonthOccupancy = 50;
-
-  // Growth % calculations
-  // const bookingGrowth =
-  //   prevMonthBookings > 0
-  //     ? (((totalBookings - prevMonthBookings) / prevMonthBookings) * 100).toFixed(1)
-  //     : "0";
-  // const guestGrowth =
-  //   prevMonthGuests > 0
-  //     ? (((currentGuests - prevMonthGuests) / prevMonthGuests) * 100).toFixed(1)
-  //     : "0";
-  // const occupancyGrowth =
-  //   prevMonthOccupancy > 0
-  //     ? (((occupancyRate - prevMonthOccupancy) / prevMonthOccupancy) * 100).toFixed(1)
-  //     : "0";
 
   const fetchBookings = async () => {
     try {
+      setLoading(true);   // ✅ start loading
+
       const res = await fetch(
-        "https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings"
+        "http://localhost:5000/api/bookings"
       );
+
       const json = await res.json();
-      if (!json.data) return;
+      if (!json.data) {
+        setLoading(false);
+        return;
+      }
 
       const normalized = json.data.map((b) => ({
         id: b.booking_id || b.id,
         bulk_id: b.bulk_id || null,
-
         guest: b.guest ?? "",
         phone: b.phone ?? "",
-
-        villas: Array.isArray(b.villas)
-          ? b.villas
-          : [b.villa],
-
+        villas: Array.isArray(b.villas) ? b.villas : [b.villa],
         checkIn: b.check_in,
         checkOut: b.check_out,
         nights: Number(b.nights) || 0,
         guests: Number(b.guests) || 0,
-
         status: b.status ?? "",
-
         baseAmount: Number(b.base_amount) || 0,
         gstType: b.gst_type ?? "",
         totalAmount: Number(b.total_amount) || 0,
         advancedAmount: Number(b.advanced_amount) || 0,
         remainingAmount: Number(b.remaining_amount) || 0,
-
         paymentMode: b.payment_mode ?? "-",
         paymentCategory: b.payment_category ?? "-",
         receivedBy: b.received_by ?? "-",
-
         address: b.address ?? "",
       }));
 
-
-
       setBookings(
-        normalized.sort(
-          (a, b) => String(b.id).localeCompare(String(a.id))
+        normalized.sort((a, b) =>
+          String(b.id).localeCompare(String(a.id))
         )
       );
     } catch (err) {
       console.error("Error fetching bookings:", err);
+    } finally {
+      setLoading(false);   // ✅ stop loading
     }
   };
+
 
   useEffect(() => {
     fetchBookings();
   }, []);
 
   const handleDeleteBooking = async (booking) => {
-    console.log("Deleting booking:", booking); // 🔍 debug
+    console.log("Deleting booking:", booking);
 
     const isBulk = Boolean(booking.bulk_id);
 
+    // ✅ extract numeric id from "single-444"
+    let bookingId = null;
+
+    if (!isBulk) {
+      if (typeof booking.id === "string" && booking.id.includes("-")) {
+        bookingId = booking.id.split("-")[1];  // "444"
+      } else {
+        bookingId = booking.id;
+      }
+
+      bookingId = Number(bookingId);
+    }
+
+    if (!isBulk && isNaN(bookingId)) {
+      alert("Invalid booking ID in frontend");
+      return;
+    }
+
     const url = isBulk
       ? `${API_BASE}/api/bookings/bulk/${booking.bulk_id}`
-      : `${API_BASE}/api/bookings/${booking.id}`;
-
+      : `${API_BASE}/api/bookings/${bookingId}`;
 
     if (!window.confirm(
       isBulk
@@ -208,17 +211,23 @@ const Booking = () => {
         : "Delete this booking?"
     )) return;
 
-    const res = await fetch(url, { method: "DELETE" });
-    const body = await res.json();
+    try {
+      const res = await fetch(url, { method: "DELETE" });
+      const body = await res.json();
 
-    if (!res.ok) {
-      alert(body.error || "Delete failed");
-      return;
+      if (!res.ok) {
+        alert(body.error || "Delete failed");
+        return;
+      }
+
+      alert("Booking deleted");
+      fetchBookings();
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Something went wrong");
     }
-
-    alert("Booking deleted");
-    fetchBookings(); // refresh list
   };
+
 
   const handleSaveEditedBooking = async (updatedBooking) => {
     const bookingId = updatedBooking.id || selectedBooking?.id;
@@ -226,7 +235,7 @@ const Booking = () => {
 
     try {
       const response = await fetch(
-        `https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings/${bookingId}`,
+        `http://localhost:5000/api/bookings/${bookingId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -239,6 +248,21 @@ const Booking = () => {
       console.error("Update failed:", error);
     }
   };
+
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-success" role="status"></div>
+          <p className="mt-3 fw-semibold">Loading Bookings...</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="container my-4">
@@ -290,10 +314,11 @@ const Booking = () => {
               </button>
               <button
                 className={`btn ${activeView === "calendar" ? "btn-success" : "btn-outline-success"}`}
-                onClick={() => setActiveView("calendar")}
+                onClick={() => navigate("/calendar")}
               >
                 Calendar View
               </button>
+              
             </div>
 
             <div className="d-flex gap-2 flex-wrap">

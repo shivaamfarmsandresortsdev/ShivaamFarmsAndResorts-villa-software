@@ -12,12 +12,12 @@ import expenseRoutes from "./routes/expense.js";
 import checkinRoutes from "./routes/checkinRoutes.js";
 import bookingInvoiceRoutes from "./routes/bookingInvoiceRoutes.js";
 import villaRoutes from "./routes/villaRoutes.js";
-
+// import invoiceRoutes from "./routes/invoiceRoutes.js";
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json());     
 
 // ✅ Health check
 app.get("/__supabase_test", async (req, res) => {
@@ -42,6 +42,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api", bookingInvoiceRoutes);
 app.use("/api/checkins", checkinRoutes);
 app.use("/api/villas", villaRoutes);
+// app.use("/api", invoiceRoutes);
 
 // ✅ IMPORTANT — pass supabase client to these route functions
 app.use("/api/revenue", revenueRoutes(supabase));

@@ -4,7 +4,7 @@ import axios from "axios";
 // ✅ Works both locally + deployed
 const API_BASE =
     import.meta.env.VITE_API_BASE ||
-    "https://shivaam-farms-and-resorts-villa-1.onrender.com";
+    "http://localhost:5000";
 
 const Villas = () => {
     const [villas, setVillas] = useState([]);
@@ -13,7 +13,7 @@ const Villas = () => {
     const [name, setName] = useState("");
     const [type, setType] = useState("Villa");
     const [capacity, setCapacity] = useState("");
-
+ const [loading, setLoading] = useState(true); 
     // Edit state
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({
@@ -23,14 +23,17 @@ const Villas = () => {
     });
 
     const fetchVillas = async () => {
-        try {
-            const res = await axios.get(`${API_BASE}/api/villas`);
-            setVillas(res.data.data || []);
-        } catch (err) {
-            console.error("❌ Failed to fetch villas:", err?.response?.data || err.message);
-            alert("Failed to load villas");
-        }
-    };
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_BASE}/api/villas`);
+      setVillas(res.data.data || []);
+    } catch (err) {
+      console.error("❌ Failed to fetch villas:", err?.response?.data || err.message);
+      alert("Failed to load villas");
+    } finally {
+      setLoading(false);
+    }
+  };
 
     useEffect(() => {
         fetchVillas();
@@ -108,6 +111,20 @@ const Villas = () => {
             alert("Update failed: " + (err?.response?.data?.error || err.message));
         }
     };
+
+     if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-success" role="status"></div>
+          <p className="mt-3 fw-semibold">Loading villas...</p>
+        </div>
+      </div>
+    );
+  }
 
     return (
         <div className="container mt-3">

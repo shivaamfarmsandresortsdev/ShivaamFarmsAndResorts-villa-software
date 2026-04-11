@@ -10,18 +10,29 @@ const Stocks = () => {
   const [items, setItems] = useState([]);
 
   const [selectedVilla, setSelectedVilla] = useState("All Villas");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Filter items based on selected villa
   const allItemsFiltered = items.filter(item =>
     selectedVilla === "All Villas" || item.villa?.toLowerCase() === selectedVilla.toLowerCase()
   );
-  const fetchStocks = async () => {
+   const fetchStocks = async () => {
     try {
-      const res = await fetch("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/stocks");
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch(
+        "http://localhost:5000/api/stocks"
+      );
+
       const data = await res.json();
       setItems(data);
     } catch (err) {
       console.error("Error fetching stocks:", err);
+      setError("Failed to load stock data.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,13 +66,20 @@ const Stocks = () => {
 
 
 
-
+ // ✅ EARLY RETURN ERROR
+  if (error) {
+    return (
+      <div className="container mt-4">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/stocks", {
+      const res = await fetch("http://localhost:5000/api/stocks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -239,7 +257,19 @@ const Stocks = () => {
 
   const totalExpenses = items.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
 
-
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-success" role="status"></div>
+          <p className="mt-3 fw-semibold">Loading Stocks...</p>
+        </div>
+      </div>
+    );
+  }
   return (
 
     <div className="overviewContainer container">

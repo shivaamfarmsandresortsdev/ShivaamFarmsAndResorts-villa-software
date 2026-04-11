@@ -3,12 +3,17 @@ import Calendar from "../components/Calendar/Calendar";
 
 const CalendarPage = () => {
   const [bookedDatesByVilla, setBookedDatesByVilla] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
         const res = await fetch(
-          "https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings"
+          "http://localhost:5000/api/bookings"
         );
 
         const result = await res.json();
@@ -17,8 +22,6 @@ const CalendarPage = () => {
         const villaData = {};
 
         data.forEach((booking) => {
-
-          // ✅ SUPPORT single & multiple villas
           const villas = booking.villas || [booking.villa];
 
           const checkIn = booking.checkIn || booking.check_in;
@@ -36,7 +39,6 @@ const CalendarPage = () => {
             let currentDate = new Date(checkIn);
             let endDate = new Date(checkOut);
 
-            // ✅ Add all days between check-in & checkout
             while (currentDate < endDate) {
               const formattedDate =
                 `${currentDate.getFullYear()}-${String(
@@ -49,24 +51,47 @@ const CalendarPage = () => {
               currentDate.setDate(currentDate.getDate() + 1);
             }
           });
-
         });
 
-        console.log("CALENDAR DATA:", villaData); // debug
-
         setBookedDatesByVilla(villaData);
-      } catch (error) {
-        console.error("Error fetching bookings:", error);
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        setError("Failed to load calendar data.");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchBookings();
   }, []);
 
+  // ✅ EARLY RETURN LOADING
+ if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-success" role="status"></div>
+          <p className="mt-3 fw-semibold">Loading Calendar...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ EARLY RETURN ERROR
+  if (error) {
+    return (
+      <div className="container mt-4">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 className="mb-3">Villa Calendar</h2>
-
       <Calendar
         bookedDatesByVilla={bookedDatesByVilla}
         onDateSelect={() => {}}

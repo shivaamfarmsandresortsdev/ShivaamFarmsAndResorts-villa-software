@@ -10,37 +10,35 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // ---- ADMIN ----
-    if (username === "admin" && password === "12345") {
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("role", "admin");   // ⭐ IMPORTANT
-      navigate("/");                  // main page
-      return;
-    }
+  if (username === "admin" && password === "12345") {
+    localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("role", "admin");
+    localStorage.setItem("loginTime", Date.now()); // ✅ ADD THIS
+    navigate("/");
+    return;
+  }
 
-    // ---- STAFF ----
-    if (username === "staff" && password === "12345") {
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("role", "staff");   // ⭐ IMPORTANT
-      navigate("/");
-      return;
-    }
+  if (username === "staff" && password === "12345") {
+    localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("role", "staff");
+    localStorage.setItem("loginTime", Date.now()); // ✅ ADD THIS
+    navigate("/");
+    return;
+  }
 
-    // ---- EXECUTIVE ----
-    if (username === "executive" && password === "12345") {
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("role", "executive");
-      // ⭐ EXECUTIVE gets STAFF permissions
-      navigate("/");
-      return;
-    }
+  if (username === "executive" && password === "12345") {
+    localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("role", "executive");
+    localStorage.setItem("loginTime", Date.now()); // ✅ ADD THIS
+    navigate("/");
+    return;
+  }
 
+  setError("Invalid username or password");
+};
 
-    // ---- ELSE ----
-    setError("Invalid username or password");
-  };
 
   return (
     <div className="login-wrapper">

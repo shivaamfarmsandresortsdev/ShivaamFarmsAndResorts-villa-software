@@ -4,7 +4,7 @@ import "./NewBooking.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://shivaam-farms-and-resorts-villa-1.onrender.com";
+  "http://localhost:5000";
 
 const NewBooking = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -43,7 +43,8 @@ const NewBooking = ({ onClose, onSave }) => {
     "Krishna Villa",
     "Motvani Villa",
     "Bhatkar villa",
-    "Hill Farm"
+    "Hill Farm",
+    "Wood Farm"
   ];
 
   const [dateError, setDateError] = useState("");

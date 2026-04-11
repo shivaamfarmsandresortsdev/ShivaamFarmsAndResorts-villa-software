@@ -15,6 +15,7 @@ const VILLA_OPTIONS = [
   { value: "Motvani Villa", label: "Motvani Villa" },
   { value: "Bhatkar Villa", label: "Bhatkar Villa" },
   { value: "Hill Farm", label: "Hill Farm" },
+  { value: "Wood Farm", label: "Wood Farm" },
 ];
 
 const EditBulkBooking = ({ bulkBooking, onClose, onSave }) => {
@@ -111,7 +112,7 @@ const EditBulkBooking = ({ bulkBooking, onClose, onSave }) => {
         return;
       }
 
-const url = `https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings/bulk/${bulkData.bulkId}`;
+const url = `http://localhost:5000/api/bookings/bulk/${bulkData.bulkId}`;
 
 
       console.log("PUT URL:", url);

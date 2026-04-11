@@ -5,6 +5,7 @@ import RevenueTable from "../components/FinanceTable/RevenueTable";
 import ExpenseTable from "../components/FinanceTable/ExpenseTable";
 import axios from "axios";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -48,6 +49,8 @@ const Finance = () => {
   const [months, setMonths] = useState([]);
   const [stockPrices, setStockPrices] = useState([]);
   const [stockLabels, setStockLabels] = useState([]);
+  const [loading, setLoading] = useState(true);
+
 
   const [transactions, setTransactions] = useState([]);
   const [transactionsForDisplay, setTransactionsForDisplay] = useState([]);
@@ -58,7 +61,7 @@ const Finance = () => {
     switch (range) {
       case "This Month":
         return new Date(now.getFullYear(), now.getMonth(), 1);
-      case "Last Month":
+      case "Last 2 Month":
         return new Date(now.getFullYear(), now.getMonth() - 1, 1);
       case "Last 3 Months":
         return new Date(now.getFullYear(), now.getMonth() - 3, 1);
@@ -75,13 +78,14 @@ const Finance = () => {
     let stockData = [];
     let bookingData = [];
 
+    setLoading(true); // 👈 START LOADING
+
     axios
-      .get("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/stocks")
+      .get("http://localhost:5000/api/stocks")
       .then((res) => {
         if (Array.isArray(res.data)) {
           stockData = res.data.map((item) => ({
-            description: `${item.itemname || "Unnamed"} | ${item.villa || "N/A"} | ${item.category || "N/A"
-              }`,
+            description: `${item.itemname || "Unnamed"} | ${item.villa || "N/A"} | ${item.category || "N/A"}`,
             date: item.date || new Date().toISOString(),
             amount: Number(item.total_amount ?? item.price ?? 0),
             type: "loss",
@@ -100,7 +104,10 @@ const Finance = () => {
             total_amount: Number(item.price) || 0,
           }));
         }
-        return axios.get("https://shivaam-farms-and-resorts-villa-1.onrender.com/api/bookings");
+
+        return axios.get(
+          "http://localhost:5000/api/bookings"
+        );
       })
       .then((res) => {
         const bookingArray = Array.isArray(res.data)
@@ -111,34 +118,23 @@ const Finance = () => {
 
         bookingData = bookingArray.map((item) => ({
           description: `${item.firstName || ""} ${item.lastName || ""} | ${item.villa || "Villa"}`,
-
           date: item.checkIn || item.created_at || new Date().toISOString(),
-
-          // 💰 Customer payment
           customer_payment: Number(item.totalAmount || item.total_amount || 0),
-
           advancedAmount: Number(item.advanceAmount || 0),
           remainingAmount: Number(item.remainingAmount || 0),
-
           type: "profit",
           status: item.status || "completed",
-
           receivedBy: item.received_by || "Customer",
           paymentMode: item.paymentMode || item.payment_mode || "Cash",
           paymentCategory: "Customer Payment",
-
           source: "Booking",
-
           gst_type: item.gst_type || "-",
           gst_amount: Number(item.gst_amount || 0),
           cgst_amount: Number(item.cgst_amount || 0),
           sgst_amount: Number(item.sgst_amount || 0),
           igst_amount: Number(item.igst_amount || 0),
-
-          // ✅ used everywhere else
           total_amount: Number(item.totalAmount || item.total_amount || 0),
         }));
-
 
         const combined = [...stockData, ...bookingData].sort(
           (a, b) => new Date(b.date) - new Date(a.date)
@@ -146,8 +142,14 @@ const Finance = () => {
 
         setTransactions(combined);
       })
-      .catch((err) => console.error("Error fetching stock/booking data:", err));
+      .catch((err) =>
+        console.error("Error fetching stock/booking data:", err)
+      )
+      .finally(() => {
+        setLoading(false); // 👈 STOP LOADING
+      });
   }, []);
+
 
   useEffect(() => {
     const startDate = getStartDateFromRange(timeRange);
@@ -202,21 +204,73 @@ const Finance = () => {
     setStockLabels(stockLabels);
   }, [timeRange, transactions]);
 
-  const filterOptions = ["This Month", "Last Month", "Last 3 Months", "Last 6 Months", "Last Year"];
+  const filterOptions = ["This Month", "Last 2 Month", "Last 3 Months", "Last 6 Months", "Last Year"];
 
-  const handleExportPDF = async () => {
-    if (!transactionsRef.current) return;
-    try {
-      const canvas = await html2canvas(transactionsRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save("RecentTransactions.pdf");
-    } catch (err) {
-      console.error("Failed to export PDF:", err);
+  const handleExportPDF = () => {
+    if (!transactionsForDisplay || transactionsForDisplay.length === 0) {
+      alert("No transactions to export");
+      return;
     }
+
+    const doc = new jsPDF("l", "mm", "a4"); // Landscape for better fit
+
+    // Add Title
+    doc.setFontSize(18);
+    doc.text("Finance Report - Recent Transactions", 14, 15);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+
+    // Add timestamp and filter info
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+    doc.text(`Time Range: ${timeRange}`, 14, 27);
+
+    const tableColumn = ["#", "Source", "Description", "Date", "Adv. Amt", "Rem. Amt", "Status", "Recv. By", "Mode", "Category", "Total"];
+    const tableRows = [];
+
+    transactionsForDisplay.forEach((t, i) => {
+      const transactionData = [
+        i + 1,
+        t.source,
+        t.description,
+        t.date ? new Date(t.date).toLocaleDateString() : "",
+        `₹${(t.advancedAmount ?? 0).toLocaleString()}`,
+        `₹${(t.remainingAmount ?? 0).toLocaleString()}`,
+        t.status ?? "-",
+        t.receivedBy ?? "-",
+        t.paymentMode ?? "-",
+        t.paymentCategory ?? "-",
+        `₹${(Number(t.total_amount) || 0).toLocaleString()}`,
+      ];
+      tableRows.push(transactionData);
+    });
+
+    // SUMMARY ROWS
+    const grandTotal =
+      transactionsForDisplay.reduce(
+        (sum, t) => sum + (t.source === "Booking" ? Number(t.total_amount) || 0 : 0),
+        0
+      ) -
+      transactionsForDisplay.reduce(
+        (sum, t) => sum + (t.source === "Stock" ? Number(t.total_amount) || 0 : 0),
+        0
+      );
+
+    tableRows.push([
+      { content: "Grand Total", colSpan: 10, styles: { halign: "right", fontStyle: "bold" } },
+      { content: `₹${grandTotal.toLocaleString()}`, styles: { fontStyle: "bold" } },
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 35,
+      theme: "grid",
+      headStyles: { fillColor: [40, 167, 69] },
+      styles: { fontSize: 8 },
+      margin: { top: 35 },
+    });
+
+    doc.save(`FinanceReport_${timeRange.replace(/\s+/g, "_")}.pdf`);
   };
 
   const handleExportCSV = (transactions) => {
@@ -290,9 +344,24 @@ const Finance = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "RecentTransactions");
 
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), "RecentTransactions.xlsx");
+    saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), `FinanceReport_${timeRange.replace(/\s+/g, "_")}.xlsx`);
+    // saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), "RecentTransactions.xlsx");
   };
 
+
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="text-center">
+          <div className="spinner-border text-success" role="status"></div>
+          <p className="mt-3 fw-semibold">Loading Finance Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="container-fluid mt-4">
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
@@ -320,7 +389,7 @@ const Finance = () => {
           </button>
           <button
             className="btn btn-outline-secondary"
-            onClick={() => handleExportCSV(transactions)}
+            onClick={() => handleExportCSV(transactionsForDisplay)}
           >
             Export CSV/Excel
           </button>

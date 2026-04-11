@@ -5,35 +5,27 @@ import "./Invoice.css";
 const Invoice = ({ booking, onClose }) => {
   if (!booking) return null;
 
-  // ✅ Normalize booking fields (SAFE VERSION)
   const normalizedBooking = {
     guest:
       booking.guest ||
       `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
-
     phone: booking.phone || "-",
-
     villas: Array.isArray(booking.villas)
       ? booking.villas
       : booking.villa
-      ? [booking.villa]
-      : [],
-
+        ? [booking.villa]
+        : [],
     checkIn: booking.checkIn || booking.check_in,
     checkOut: booking.checkOut || booking.check_out,
-
     amount:
       Number(booking.base_amount) ||
       Number(booking.totalAmount) ||
       Number(booking.total_amount) ||
       0,
-
     paymentMode:
       booking.payment_mode || booking.paymentMode || "Cash",
-
     receivedBy:
       booking.received_by || booking.receivedBy || "Admin",
-
     guests: booking.guests || 1,
   };
 
@@ -44,20 +36,18 @@ const Invoice = ({ booking, onClose }) => {
     email: "shivaamfarmsandresorts@gmail.com",
   };
 
-  // ---------------- PDF DOWNLOAD ----------------
-  const handleDownload = () => {
+  // 🔥 COMMON FUNCTION TO GENERATE PDF
+  const generatePDF = () => {
     const doc = new jsPDF("p", "mm", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    /* WATERMARK */
     doc.setFontSize(30);
     doc.setTextColor(220, 220, 220);
-    doc.text("SHIVAAM FARMS & RESORTS", pageWidth / 2, 160, {
+    doc.text(company.name, pageWidth / 2, 160, {
       align: "center",
       angle: 45,
     });
 
-    /* HEADER */
     doc.setTextColor(0, 100, 0);
     doc.setFontSize(18);
     doc.text(company.name, 15, 20);
@@ -80,7 +70,6 @@ const Invoice = ({ booking, onClose }) => {
     );
     doc.text(`Guests: ${normalizedBooking.guests}`, pageWidth - 80, 38);
 
-    /* GUEST DETAILS */
     let y = 48;
     doc.setFontSize(11);
     doc.text(`Guest: ${normalizedBooking.guest}`, 15, y);
@@ -95,7 +84,6 @@ const Invoice = ({ booking, onClose }) => {
       y += 5;
     });
 
-    /* TABLE HEADER */
     y += 8;
     doc.setFillColor(212, 237, 218);
     doc.rect(15, y, pageWidth - 30, 8, "F");
@@ -104,53 +92,90 @@ const Invoice = ({ booking, onClose }) => {
     doc.text("Qty", 140, y + 6);
     doc.text("Subtotal (Rs.)", 165, y + 6);
 
-    /* ITEM ROW */
     y += 14;
     doc.text("Villa Booking", 20, y);
     doc.text(`Rs. ${normalizedBooking.amount.toFixed(2)}`, 100, y);
     doc.text("1", 142, y);
     doc.text(`Rs. ${normalizedBooking.amount.toFixed(2)}`, 165, y);
 
-    /* GRAND TOTAL */
     y += 15;
     doc.setFillColor(220, 237, 247);
     doc.rect(15, y, pageWidth - 30, 8, "F");
     doc.text("Grand Total", 20, y + 6);
     doc.text(`Rs. ${normalizedBooking.amount.toFixed(2)}`, 165, y + 6);
 
-    /* PAYMENT */
     y += 16;
     doc.text(`Payment Mode: ${normalizedBooking.paymentMode}`, 15, y);
     y += 6;
     doc.text(`Received By: ${normalizedBooking.receivedBy}`, 15, y);
 
-    /* TERMS */
-    y += 12;
-    doc.setFontSize(10);
-    doc.text("Terms and Conditions:", 15, y);
-    y += 6;
-
-    doc.text(
-      [
-        "1. Check-in time is 1:00 PM and check-out time is 11:00 AM.",
-        "2. Guests are responsible for any damages during stay.",
-        "3. Outside food delivery is not allowed.",
-        "4. Loud music not allowed after 10:00 PM.",
-        "5. Pool usage at guest's own risk.",
-      ],
-      15,
-      y
-    );
-
-    /* FOOTER */
     doc.text("Thank you for visiting!", pageWidth / 2, 290, {
       align: "center",
     });
 
-    doc.save(
-      `Invoice_${normalizedBooking.guest}_${normalizedBooking.villas.length}_Villas.pdf`
-    );
+    return doc;
   };
+
+  // ✅ Download Button
+  const handleDownload = () => {
+    const doc = generatePDF();
+    doc.save(`Invoice_${normalizedBooking.guest}.pdf`);
+  };
+
+  // ✅ WhatsApp Share (Upload → Get URL → Share)
+//  const handleWhatsAppShare = async () => {
+//   try {
+//     const response = await fetch(
+//       "http://localhost:5000/api/upload-invoice",
+//       {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           customerName: normalizedBooking.guest,
+//           checkIn: normalizedBooking.checkIn,
+//           checkOut: normalizedBooking.checkOut,
+//           guests: normalizedBooking.guests,
+//           villas: normalizedBooking.villas,
+//           totalAmount: normalizedBooking.amount,
+//           paymentMode: normalizedBooking.paymentMode,
+//         }),
+//       }
+//     );
+
+//     const data = await response.json();
+
+//     if (!data.url) {
+//       alert("Invoice generation failed!");
+//       return;
+//     }
+
+//     let phone = normalizedBooking.phone.replace(/\D/g, "");
+//     if (!phone.startsWith("91")) phone = "91" + phone;
+
+//     const message = `
+// 🏡 SHIVAAM FARMS & RESORTS
+
+// Hello ${normalizedBooking.guest},
+
+// Please download your invoice:
+// ${data.url}
+
+// Thank you 🙏
+// `;
+
+//     const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(
+//       message
+//     )}`;
+
+//     window.open(whatsappURL, "_blank");
+
+//   } catch (error) {
+//     console.error(error);
+//     alert("Something went wrong while sharing invoice.");
+//   }
+// };
 
   return (
     <div className="invoice-overlay">
@@ -227,9 +252,21 @@ const Invoice = ({ booking, onClose }) => {
         </p>
 
         <div className="text-center mt-4">
-          <button className="btn btn-success" onClick={handleDownload}>
+          <button className="btn btn-success me-2" onClick={handleDownload}>
             ⬇️ Download Invoice
           </button>
+
+          {/* <button
+            className="btn"
+            style={{
+              backgroundColor: "#25D366",
+              color: "white",
+              border: "none",
+            }}
+            onClick={handleWhatsAppShare}
+          >
+            📲 Share on WhatsApp
+          </button> */}
         </div>
       </div>
     </div>
