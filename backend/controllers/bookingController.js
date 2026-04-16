@@ -101,29 +101,44 @@ const computeDerived = (booking) => {
 };
 
 /* Create booking */
+/* Create booking */
 export const addBooking = async (req, res) => {
   try {
     const incoming = normalizeIncoming(req.body);
+
     // sanitize aadhar
-    if (incoming.aadhar) incoming.aadhar = String(incoming.aadhar).replace(/\s/g, "");
+    if (incoming.aadhar) {
+      incoming.aadhar = String(incoming.aadhar).replace(/\s/g, "");
+    }
 
     const derived = computeDerived(incoming);
 
-    // Prepare DB payload - snake_case
+    // ✅ Normalize dates once
+    const checkInDate = new Date(incoming.checkIn);
+    const checkOutDate = new Date(incoming.checkOut);
+
+    if (isNaN(checkInDate) || isNaN(checkOutDate)) {
+      return res.status(400).json({ error: "Invalid dates provided" });
+    }
+
+    // ✅ Prepare DB payload (DATE column → send YYYY-MM-DD string)
     const bookingData = {
       guest: incoming.guest,
-      email: incoming.email,
+      email: incoming.email ?? null,
       phone: incoming.phone ?? null,
       address: incoming.address ?? null,
       aadhar: incoming.aadhar ?? null,
       villa: incoming.villa,
-      check_in: incoming.checkIn,
-      check_out: incoming.checkOut,
+
+      // Important: send date string only
+      check_in: checkInDate.toISOString().split("T")[0],
+      check_out: checkOutDate.toISOString().split("T")[0],
+
       nights: derived.nights,
       guests: incoming.guests,
 
       base_amount: derived.baseAmount,
-      gst_type: incoming.gstType,
+      gst_type: incoming.gstType ?? null,
       gst_amount: derived.gstAmount,
       cgst_amount: derived.cgstAmount,
       sgst_amount: derived.sgstAmount,
@@ -139,15 +154,37 @@ export const addBooking = async (req, res) => {
     };
 
     const { data, error } = await insertBooking(bookingData);
-    if (error) throw error;
 
-    res.status(200).json({ message: "Booking added", data });
+    // ✅ Handle DB errors properly
+    if (error) {
+      console.log("ACTUAL DB ERROR:", error);
+
+      // 🔴 Overlap constraint catch
+      if (error.message?.includes("no_overlapping_booking")) {
+        return res.status(400).json({
+          error: "This villa is already booked for selected dates",
+        });
+      }
+
+      // Any other DB error
+      return res.status(500).json({
+        error: "Database error occurred",
+      });
+    }
+
+    return res.status(201).json({
+      message: "Booking added successfully",
+      data: data?.[0],
+    });
+
   } catch (err) {
-    console.error("Add booking error:", err.message || err);
-    res.status(500).json({ error: err.message || "Server error" });
+    console.error("Add booking error:", err);
+
+    return res.status(500).json({
+      error: "Internal server error",
+    });
   }
 };
-
 /* Get all bookings */
 export const getAllBookings = async (req, res) => {
   try {
