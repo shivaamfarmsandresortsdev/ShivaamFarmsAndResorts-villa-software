@@ -16,7 +16,21 @@ import villaRoutes from "./routes/villaRoutes.js";
 
 const app = express();
 
-app.use(cors());
+import express from "express";
+import cors from "cors";
+
+
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://villa.shivaamfarmsandresorts.com"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
+app.use(express.json());
 app.use(express.json());     
 
 // ✅ Health check
