@@ -16,8 +16,7 @@ import villaRoutes from "./routes/villaRoutes.js";
 
 const app = express();
 
-import express from "express";
-import cors from "cors";
+
 
 
 
