@@ -31,7 +31,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.json());     
+    
 
 // ✅ Health check
 app.get("/__supabase_test", async (req, res) => {
