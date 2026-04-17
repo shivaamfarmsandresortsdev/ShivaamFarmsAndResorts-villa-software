@@ -30,9 +30,9 @@ const Dashboard = () => {
 
         const [staffData, bookingRes, stockRes] = await Promise.all([
           getStaff(),
-          fetch("http://localhost:5000/api/bookings")
+          fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings")
             .then(res => res.json()),
-          fetch("http://localhost:5000/api/stocks")
+          fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks")
             .then(res => res.json())
         ]);
 

@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/staff"; // ✅ match backend route
+const API_URL = "https://shivaamfarmsandresorts-villa-software-1.onrender.com/staff"; // ✅ match backend route
 
 export const getStaff = async () => {
     const res = await fetch(API_URL);

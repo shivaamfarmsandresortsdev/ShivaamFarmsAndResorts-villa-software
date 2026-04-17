@@ -193,7 +193,7 @@ export const getAllBookings = async (req, res) => {
       console.error("FETCH ERROR:", error);
       return res.status(500).json({ data: [] });
     }
-    console.log("FETCHED BOOKINGS:", data);
+   
 
 
     const grouped = Object.values(

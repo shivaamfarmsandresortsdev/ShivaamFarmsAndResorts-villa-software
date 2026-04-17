@@ -13,7 +13,7 @@ const CalendarPage = () => {
         setError(null);
 
         const res = await fetch(
-          "http://localhost:5000/api/bookings"
+          "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings"
         );
 
         const result = await res.json();

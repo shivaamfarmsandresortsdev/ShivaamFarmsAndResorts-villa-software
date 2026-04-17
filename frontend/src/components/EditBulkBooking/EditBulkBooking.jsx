@@ -117,7 +117,7 @@ const EditBulkBooking = ({ bulkBooking, onClose, onSave }) => {
         return;
       }
 
-const url = `http://localhost:5000/api/bookings/bulk/${bulkData.bulkId}`;
+const url = `https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings/bulk/${bulkData.bulkId}`;
 
 
       console.log("PUT URL:", url);
