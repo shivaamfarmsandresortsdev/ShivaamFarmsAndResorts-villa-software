@@ -17,6 +17,7 @@ const VILLA_OPTIONS = [
   { value: "Hill Farm", label: "Hill Farm" },
   { value: "Wood Farm", label: "Wood Farm" },
   { value: "Palpalkar Villa", label: "Palpalkar Villa" },
+  { value: "Junavar Villa", label: "Junavar Villa" },
 ];
 
 const EditBulkBooking = ({ bulkBooking, onClose, onSave }) => {

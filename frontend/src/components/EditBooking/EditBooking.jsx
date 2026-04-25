@@ -44,7 +44,8 @@ const EditBooking = ({ booking, onClose, onSave }) => {
     "Bhatkar Villa",
     "Hill Farm",
   "Wood Farm",
-   "Papalkar Villa"
+   "Papalkar Villa",
+   "Junavar Villa"
 ];
 
   useEffect(() => {
