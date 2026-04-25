@@ -19,7 +19,8 @@ const Calendar = ({
     "Motvani Villa",
     "Bhatkar Villa",
     "Hill Farm",
-    "Wood Farm"
+    "Wood Farm",
+     "Papalkar Villa"
   ],
 }) => {
 
@@ -51,6 +52,7 @@ const Calendar = ({
     "#038316ff", // complement of #341F97
     "#738316ff", // complement of #341F97
     "rgb(94, 0, 66)", // complement of #341F97
+    "rgb(50, 53, 34)"
     
   ]
   villas.forEach((villa, i) => {

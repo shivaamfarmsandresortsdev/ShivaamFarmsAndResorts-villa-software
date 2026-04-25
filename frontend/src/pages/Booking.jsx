@@ -22,7 +22,7 @@ import "./Booking.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+  "https://shivaamfarmsandresorts-villa-software-new.onrender.com";
 // ---------------- CSV Export ----------------
 const exportToCSV = (rows, filename) => {
   if (!rows.length) return;
@@ -130,7 +130,7 @@ const navigate = useNavigate();
       setLoading(true);   // ✅ start loading
 
       const res = await fetch(
-        "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings"
+        "https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings"
       );
 
       const json = await res.json();
@@ -235,7 +235,7 @@ const navigate = useNavigate();
 
     try {
       const response = await fetch(
-        `https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings/${bookingId}`,
+        `https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings/${bookingId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

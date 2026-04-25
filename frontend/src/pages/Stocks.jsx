@@ -23,7 +23,7 @@ const Stocks = () => {
       setError(null);
 
       const res = await fetch(
-        "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks"
+        "https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/stocks"
       );
 
       const data = await res.json();
@@ -79,7 +79,7 @@ const Stocks = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks", {
+      const res = await fetch("https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/stocks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

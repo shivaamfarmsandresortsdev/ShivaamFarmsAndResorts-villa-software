@@ -80,7 +80,7 @@ const Finance = () => {
     setLoading(true); // 👈 START LOADING
 
     axios
-      .get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks")
+      .get("https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/stocks")
       .then((res) => {
         if (Array.isArray(res.data)) {
           stockData = res.data.map((item) => ({
@@ -105,7 +105,7 @@ const Finance = () => {
         }
 
         return axios.get(
-          "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings"
+          "https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings"
         );
       })
       .then((res) => {

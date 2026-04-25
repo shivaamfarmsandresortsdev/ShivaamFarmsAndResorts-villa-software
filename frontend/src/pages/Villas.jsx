@@ -4,7 +4,7 @@ import axios from "axios";
 // ✅ Works both locally + deployed
 const API_BASE =
     import.meta.env.VITE_API_BASE ||
-    "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+    "https://shivaamfarmsandresorts-villa-software-new.onrender.com";
 
 const Villas = () => {
     const [villas, setVillas] = useState([]);

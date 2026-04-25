@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://shivaamfarmsandresorts-villa-software-1.onrender.com", // 👈 backend port
+        target: "https://shivaamfarmsandresorts-villa-software-new.onrender.com", // 👈 backend port
         changeOrigin: true,
         secure: false,
       },

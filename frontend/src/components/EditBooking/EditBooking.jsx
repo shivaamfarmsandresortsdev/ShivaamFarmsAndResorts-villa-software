@@ -41,9 +41,11 @@ const EditBooking = ({ booking, onClose, onSave }) => {
     "Cottage Villa",
     "Krishna Villa",
     "Motvani Villa",
-    "Bhatkar villa",
+    "Bhatkar Villa",
     "Hill Farm",
-  "Wood Farm"];
+  "Wood Farm",
+   "Papalkar Villa"
+];
 
   useEffect(() => {
     if (!booking) return;
@@ -156,7 +158,7 @@ const EditBooking = ({ booking, onClose, onSave }) => {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings/${bookingId}`, // ✅ fixed here
+        `https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings/${bookingId}`, // ✅ fixed here
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
