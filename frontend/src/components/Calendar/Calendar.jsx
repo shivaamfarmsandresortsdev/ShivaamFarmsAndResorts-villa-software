@@ -5,24 +5,7 @@ const Calendar = ({
   initialDate = new Date(),
   onDateSelect = () => { },
   bookedDatesByVilla = {},
-  villas = [
-    "All Villas",
-    "Sample Villa",
-    "Khetan Villa",
-    "Madan Villa",
-    "Pandhari Villa",
-    "Dormitory Villa",
-    "Tidke Villa",
-    "Ishan Villa",
-    "Cottage Villa",
-    "Krishna Villa",
-    "Motvani Villa",
-    "Bhatkar Villa",
-    "Hill Farm",
-    "Wood Farm",
-     "Papalkar Villa",
-     "Junavar Villa"
-  ],
+  villas = [],
 }) => {
 
   const [date, setDate] = useState(initialDate);
@@ -54,12 +37,11 @@ const Calendar = ({
     "#738316ff", // complement of #341F97
     "rgb(94, 0, 66)", // complement of #341F97
     "rgb(50, 53, 34)"
-    
+
   ]
   villas.forEach((villa, i) => {
-    villaColors[villa] = colorPalette[i % colorPalette.length];
+    villaColors[villa.name] = colorPalette[i % colorPalette.length];
   });
-
 
   const year = date.getFullYear();
   const month = date.getMonth();
@@ -190,9 +172,11 @@ const Calendar = ({
             value={selectedVilla}
             onChange={(e) => setSelectedVilla(e.target.value)}
           >
+            <option value="All Villas">All Villas</option>
+
             {villas.map((villa) => (
-              <option key={villa} value={villa}>
-                {villa}
+              <option key={villa.id} value={villa.name}>
+                {villa.name}
               </option>
             ))}
           </select>
@@ -312,22 +296,19 @@ const Calendar = ({
         </small>
 
         <div className="d-flex justify-content-center gap-3 mt-2 flex-wrap">
-          {villas.map(
-            (villa) =>
-              villa !== "All Villas" && (
-                <div key={villa} className="d-flex align-items-center gap-1">
-                  <div
-                    style={{
-                      width: "15px",
-                      height: "15px",
-                      backgroundColor: villaColors[villa],
-                      borderRadius: "3px",
-                    }}
-                  ></div>
-                  <small>{villa}</small>
-                </div>
-              )
-          )}
+          {villas.map((villa) => (
+            <div key={villa.id} className="d-flex align-items-center gap-1">
+              <div
+                style={{
+                  width: "15px",
+                  height: "15px",
+                  backgroundColor: villaColors[villa.name],
+                  borderRadius: "3px",
+                }}
+              ></div>
+              <small>{villa.name}</small>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -13,7 +13,7 @@ const NewBooking = ({ onClose, onSave }) => {
     phone: "",
     address: "",
     // aadhar: "",
-    villa: "Sample Villa",
+    villa: "",
     checkIn: "",
     checkOut: "",
     nights: 0,
@@ -30,8 +30,8 @@ const NewBooking = ({ onClose, onSave }) => {
     remainingAmount: 0,
   });
 
+
   const villaOptions = [
-    "All Villas",
     "Sample Villa",
     "Khetan Villa",
     "Madan Villa",
@@ -42,12 +42,16 @@ const NewBooking = ({ onClose, onSave }) => {
     "Cottage Villa",
     "Krishna Villa",
     "Motvani Villa",
-    "Bhatkar villa",
+    "Bhatkar Villa",
     "Hill Farm",
     "Wood Farm",
     "Papalkar Villa",
     "Junavar Villa"
   ];
+
+
+
+  const [villas, setVillas] = useState([]);
 
   const [dateError, setDateError] = useState("");
   const [bookingMode, setBookingMode] = useState("single");
@@ -58,6 +62,21 @@ const NewBooking = ({ onClose, onSave }) => {
   //   let digits = String(val).replace(/\D/g, "").slice(0, 12);
   //   return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
   // };
+
+
+
+
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/villas`)
+      .then(res => res.json())
+      .then(data => {
+        setVillas(data.data || []);
+      })
+      .catch(() => {
+        alert("Failed to load villas");
+      });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -749,9 +768,10 @@ const NewBooking = ({ onClose, onSave }) => {
                   onChange={handleChange}
                   className="form-select"
                 >
-                  {villaOptions.map((villa, index) => (
-                    <option key={index} value={villa}>
-                      {villa}
+                  <option value="">Select Villa</option>
+                  {villas.map((villa) => (
+                    <option key={villa.id} value={villa.name}>
+                      {villa.name}
                     </option>
                   ))}
                 </select>

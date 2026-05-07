@@ -1,35 +1,47 @@
 import React, { useEffect, useState } from "react";
 import Calendar from "../components/Calendar/Calendar";
 
+// ✅ Works both local + deployed
+const API_BASE =
+  import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-new.onrender.com";
+
 const CalendarPage = () => {
   const [bookedDatesByVilla, setBookedDatesByVilla] = useState({});
+  const [villas, setVillas] = useState([]); // ✅ NEW STATE
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    const fetchData = async () => { 
       try {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(
-          "https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings"
-        );
+        // 🔥 1️⃣ Fetch bookings
+        const bookingRes = await fetch(`${API_BASE}/api/bookings`);
+        const bookingResult = await bookingRes.json();
+        const bookingData = bookingResult.data || [];
 
-        const result = await res.json();
-        const data = result.data || [];
+        // 🔥 2️⃣ Fetch villas
+        const villaRes = await fetch(`${API_BASE}/api/villas`);
+        const villaResult = await villaRes.json();
+        const villaDataList = villaResult.data || [];
 
+        // ✅ Set villas
+        setVillas(villaDataList);
+
+        // 🔥 3️⃣ Convert bookings → calendar format
         const villaData = {};
 
-        data.forEach((booking) => {
-          const villas = booking.villas || [booking.villa];
+        bookingData.forEach((booking) => {
+          const villasArr = booking.villas || [booking.villa];
 
           const checkIn = booking.checkIn || booking.check_in;
           const checkOut = booking.checkOut || booking.check_out;
 
           if (!checkIn || !checkOut) return;
 
-          villas.forEach((villa) => {
+          villasArr.forEach((villa) => {
             if (!villa) return;
 
             if (!villaData[villa]) {
@@ -55,18 +67,18 @@ const CalendarPage = () => {
 
         setBookedDatesByVilla(villaData);
       } catch (err) {
-        console.error("Error fetching bookings:", err);
+        console.error("Error fetching calendar data:", err);
         setError("Failed to load calendar data.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBookings();
+    fetchData();
   }, []);
 
-  // ✅ EARLY RETURN LOADING
- if (loading) {
+  // ✅ LOADING
+  if (loading) {
     return (
       <div
         className="d-flex justify-content-center align-items-center"
@@ -80,7 +92,7 @@ const CalendarPage = () => {
     );
   }
 
-  // ✅ EARLY RETURN ERROR
+  // ✅ ERROR
   if (error) {
     return (
       <div className="container mt-4">
@@ -92,7 +104,10 @@ const CalendarPage = () => {
   return (
     <div>
       <h2 className="mb-3">Villa Calendar</h2>
+
+      {/* ✅ PASS VILLAS HERE */}
       <Calendar
+        villas={villas} // 🔥 IMPORTANT LINE
         bookedDatesByVilla={bookedDatesByVilla}
         onDateSelect={() => {}}
       />
