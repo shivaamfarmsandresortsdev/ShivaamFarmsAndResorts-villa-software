@@ -4,7 +4,7 @@ import "./NewBooking.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://shivaamfarmsandresorts-villa-software-new.onrender.com";
+  "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
 
 const NewBooking = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({

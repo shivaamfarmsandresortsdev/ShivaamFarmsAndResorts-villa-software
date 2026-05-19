@@ -22,7 +22,7 @@ import "./Booking.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://shivaamfarmsandresorts-villa-software-new.onrender.com";
+  "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
 // ---------------- CSV Export ----------------
 const exportToCSV = (rows, filename) => {
   if (!rows.length) return;
@@ -79,7 +79,7 @@ const Booking = () => {
 
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const role = localStorage.getItem("role");
   const isExecutive = role === "executive";
@@ -106,7 +106,9 @@ const navigate = useNavigate();
     return Array.from(map.values());
   };
 
-  const groupedBookings = groupBookings(bookings);
+  const groupedBookings = groupBookings(bookings).sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
 
   const filteredBookings = groupedBookings.filter(
     (b) =>
@@ -130,7 +132,7 @@ const navigate = useNavigate();
       setLoading(true);   // ✅ start loading
 
       const res = await fetch(
-        "https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings"
+        "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings"
       );
 
       const json = await res.json();
@@ -141,6 +143,7 @@ const navigate = useNavigate();
 
       const normalized = json.data.map((b) => ({
         id: b.booking_id || b.id,
+        created_at: b.created_at,
         bulk_id: b.bulk_id || null,
         guest: b.guest ?? "",
         phone: b.phone ?? "",
@@ -235,7 +238,7 @@ const navigate = useNavigate();
 
     try {
       const response = await fetch(
-        `https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings/${bookingId}`,
+        `https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings/${bookingId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -318,7 +321,7 @@ const navigate = useNavigate();
               >
                 Calendar View
               </button>
-              
+
             </div>
 
             <div className="d-flex gap-2 flex-wrap">
@@ -519,7 +522,7 @@ const navigate = useNavigate();
                 return acc;
               }, {})}
 
-              villas={["All Villas", "Sample Villa", "Khetan Villa", "Madan Villa", "Pandhari Villa", "Dormitory Villa", "Tidke Villa", "Ishan Villa", "Cottage Villa", "Krishna Villa", "Motvani Villa", "Bhatkar villa", "Hill Farm","Papalkar villa"]}
+              villas={["All Villas", "Sample Villa", "Khetan Villa", "Madan Villa", "Pandhari Villa", "Dormitory Villa", "Tidke Villa", "Ishan Villa", "Cottage Villa", "Krishna Villa", "Motvani Villa", "Bhatkar villa", "Hill Farm", "Papalkar villa"]}
               bookedByDate={bookings.reduce((acc, b) => {
                 if (b.checkIn && b.checkOut) {
                   const start = new Date(b.checkIn);

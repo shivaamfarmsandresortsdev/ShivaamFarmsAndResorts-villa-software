@@ -159,7 +159,7 @@ const EditBooking = ({ booking, onClose, onSave }) => {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://shivaamfarmsandresorts-villa-software-new.onrender.com/api/bookings/${bookingId}`, // ✅ fixed here
+        `https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings/${bookingId}`, // ✅ fixed here
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
