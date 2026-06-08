@@ -24,6 +24,8 @@ const getMaxDomain = (data) => {
   return Math.ceil(Math.max(maxRevenue, maxExpenses) / 1000) * 1000;
 };
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 const OverviewCharts = () => {
   const [chartData, setChartData] = useState([]);
   const [maxDomain, setMaxDomain] = useState(0);
@@ -33,12 +35,12 @@ const OverviewCharts = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const bookingsRes = await axios.get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings");
+        const bookingsRes = await axios.get(`${API_BASE}/api/bookings`);
         const bookings = Array.isArray(bookingsRes.data)
           ? bookingsRes.data
           : bookingsRes.data.bookings || bookingsRes.data.data || [];
 
-        const stocksRes = await axios.get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks");
+        const stocksRes = await axios.get(`${API_BASE}/api/stocks`);
         const stocks = Array.isArray(stocksRes.data)
           ? stocksRes.data
           : stocksRes.data.stocks || stocksRes.data.data || [];
@@ -86,7 +88,7 @@ const OverviewCharts = () => {
   useEffect(() => {
     const fetchExpenseBreakdown = async () => {
       try {
-        const res = await axios.get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks");
+        const res = await axios.get(`${API_BASE}/api/stocks`);
         const items = res.data;
 
         const categoryTotals = {};

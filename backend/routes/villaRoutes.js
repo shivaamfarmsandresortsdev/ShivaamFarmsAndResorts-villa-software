@@ -5,19 +5,19 @@ import {
   updateVilla,
   deleteVilla,
 } from "../controllers/villaController.js";
+import { authenticate } from "../middleware/authenticate.js";
+import { authorize } from "../middleware/authorize.js";
 
 const router = express.Router();
 
-// GET all villas
-router.get("/", getAllVillas);
+// Read: all authenticated roles (staff needs villa list for booking)
+router.get("/", authenticate, getAllVillas);
 
-// CREATE villa
-router.post("/", addVilla);
+// Create + Update: admin and manager
+router.post("/", authenticate, authorize("admin", "manager"), addVilla);
+router.put("/:id", authenticate, authorize("admin", "manager"), updateVilla);
 
-// UPDATE villa
-router.put("/:id", updateVilla);
-
-// DELETE villa
-router.delete("/:id", deleteVilla);
+// Delete: admin only
+router.delete("/:id", authenticate, authorize("admin"), deleteVilla);
 
 export default router;

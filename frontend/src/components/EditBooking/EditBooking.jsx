@@ -158,11 +158,13 @@ const EditBooking = ({ booking, onClose, onSave }) => {
 
     setLoading(true);
     try {
+      const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
       const res = await fetch(
-        `https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings/${bookingId}`, // ✅ fixed here
+        `${API_BASE}/api/bookings/${bookingId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(payload),
         }
       );

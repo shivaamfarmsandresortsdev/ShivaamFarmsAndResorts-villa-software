@@ -4,7 +4,7 @@ import "./NewBooking.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+  "http://localhost:5000";
 
 const NewBooking = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -68,13 +68,24 @@ const NewBooking = ({ onClose, onSave }) => {
 
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/villas`)
-      .then(res => res.json())
+    fetch(`${API_BASE}/api/villas`, { credentials: "include" })
+      .then(res => {
+        if (!res.ok) {
+          console.warn("Villas API returned", res.status, "— using static list");
+          return { data: [] };
+        }
+        return res.json();
+      })
       .then(data => {
-        setVillas(data.data || []);
+        const fetched = data.data || [];
+        if (fetched.length > 0) {
+          setVillas(fetched);
+        } else {
+          setVillas(villaOptions.map((name, i) => ({ id: i, name })));
+        }
       })
       .catch(() => {
-        alert("Failed to load villas");
+        setVillas(villaOptions.map((name, i) => ({ id: i, name })));
       });
   }, []);
 
@@ -225,6 +236,7 @@ const NewBooking = ({ onClose, onSave }) => {
       const res = await fetch(`${API_BASE}/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -465,6 +477,7 @@ const NewBooking = ({ onClose, onSave }) => {
         const res = await fetch(`${API_BASE}/api/bookings/bulk`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ bookings: expandedBookings }),
         });
 

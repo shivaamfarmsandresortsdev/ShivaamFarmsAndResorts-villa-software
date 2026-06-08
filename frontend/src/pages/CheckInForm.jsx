@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SearchBookingPopup from "../components/BookingSearchPopup/BookingSearchPopup.jsx";
+import { useAuth } from "../context/AuthContext";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 const CheckInForm = () => {
   const [formData, setFormData] = useState({
@@ -25,14 +28,21 @@ const CheckInForm = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [allBookings, setAllBookings] = useState([]);
-  const role = localStorage.getItem("role");
-  const isExecutive = role === "executive";
+  const [fetchError, setFetchError] = useState("");
+  const { user } = useAuth();
+  const isStaff = user?.role === "staff";
 
   // 🔹 Fetch existing check-ins from backend on component mount
   useEffect(() => {
     const fetchCheckIns = async () => {
       try {
-        const res = await fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/checkins");
+        setFetchError("");
+        const res = await fetch(`${API_BASE}/api/checkins`, { credentials: "include" });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setFetchError(err.message || `Error ${res.status}: Could not load check-ins.`);
+          return;
+        }
         const data = await res.json();
         if (data.success) {
           const mappedData = data.data.map((item) => ({
@@ -80,7 +90,7 @@ const CheckInForm = () => {
 
   const openSearch = async () => {
     try {
-      const res = await fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings");
+      const res = await fetch(`${API_BASE}/api/bookings`, { credentials: "include" });
       const data = await res.json();
       setAllBookings(data.data || []);
       setShowSearch(true);
@@ -96,9 +106,10 @@ const CheckInForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/checkins", {
+      const res = await fetch(`${API_BASE}/api/checkins`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -106,7 +117,7 @@ const CheckInForm = () => {
       if (!res.ok) throw new Error(result.error || "Failed to save check-in");
 
       // Refetch all check-ins (your existing code)
-      const fetchRes = await fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/checkins");
+      const fetchRes = await fetch(`${API_BASE}/api/checkins`, { credentials: "include" });
       const fetchedData = await fetchRes.json();
       if (fetchedData.success) {
         const mappedData = fetchedData.data.map((item) => ({
@@ -443,6 +454,9 @@ const CheckInForm = () => {
       {/* Checked-in Guests Table */}
       <div className="card shadow p-4">
         <h3 className="mb-3">Checked-in Guests</h3>
+        {fetchError && (
+          <div className="alert alert-danger py-2">{fetchError}</div>
+        )}
         <input
           type="text"
           placeholder="Search by name, phone, or villa"
@@ -488,10 +502,10 @@ const CheckInForm = () => {
                 <th>Guests</th>
                 <th>Check-in</th>
                 <th>Check-out</th>
-                {!isExecutive && <th>Payment Mode</th>}
-                {!isExecutive && <th>Advance</th>}
-                {!isExecutive && <th>Balance</th>}
-                {!isExecutive && <th>Total</th>}
+                {!isStaff && <th>Payment Mode</th>}
+                {!isStaff && <th>Advance</th>}
+                {!isStaff && <th>Balance</th>}
+                {!isStaff && <th>Total</th>}
               </tr>
             </thead>
             <tbody>
@@ -511,10 +525,10 @@ const CheckInForm = () => {
                     <td>{res.guests}</td>
                     <td>{res.checkIn || ""} {res.checkInTime || ""}</td>
                     <td>{res.checkOut || ""} {res.checkOutTime || ""}</td>
-                    {!isExecutive && <td>{res.paymentMode}</td>}
-                    {!isExecutive && <td>{res.advance}</td>}
-                    {!isExecutive && <td>{res.balance}</td>}
-                    {!isExecutive && <td>{res.total}</td>}
+                    {!isStaff && <td>{res.paymentMode}</td>}
+                    {!isStaff && <td>{res.advance}</td>}
+                    {!isStaff && <td>{res.balance}</td>}
+                    {!isStaff && <td>{res.total}</td>}
                   </tr>
                 ))
               )}

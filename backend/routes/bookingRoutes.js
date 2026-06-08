@@ -12,34 +12,30 @@ import {
   updateBulkBooking,
   getBulkBookingById,
 } from "../controllers/bookingController.js";
+import { authenticate } from "../middleware/authenticate.js";
+import { authorize } from "../middleware/authorize.js";
 
 const router = express.Router();
 
-// Create
-router.post("/", addBooking);
-router.post("/bulk", addBulkBookings);
+// ── Read (all authenticated roles) ───────────────────────────────────────────
+router.get("/", authenticate, getAllBookings);
+router.get("/bulk/:bulk_id", authenticate, getBulkBookingById);
+router.get("/villa/:villa/dates", authenticate, getBookedDates);
+router.get("/villa/:villa", authenticate, getBookingsByVilla);
 
-// Read
-router.get("/", getAllBookings);
+// Invoice: admin + manager only
+router.get("/:id/invoice", authenticate, authorize("admin", "manager"), generateInvoice);
 
-// Get bulk booking by ID
-router.get("/bulk/:bulk_id", getBulkBookingById);
+// ── Create (all roles) ────────────────────────────────────────────────────────
+router.post("/", authenticate, addBooking);
+router.post("/bulk", authenticate, addBulkBookings);
 
-// Invoice
-router.get("/:id/invoice", generateInvoice);
+// ── Update (admin + manager only) ─────────────────────────────────────────────
+router.put("/bulk/:bulk_id", authenticate, authorize("admin", "manager"), updateBulkBooking);
+router.put("/:id", authenticate, authorize("admin", "manager"), updateBooking);
 
-// Villa-based
-router.get("/villa/:villa/dates", getBookedDates);
-router.get("/villa/:villa", getBookingsByVilla);
-
-// 🔥 BULK UPDATE (FIXED)
-router.put("/bulk/:bulk_id", updateBulkBooking);
-
-// Update single
-router.put("/:id", updateBooking);
-
-// Delete
-router.delete("/bulk/:bulk_id", deleteBulkBooking);
-router.delete("/:id", deleteBooking);
+// ── Delete (admin only) ───────────────────────────────────────────────────────
+router.delete("/bulk/:bulk_id", authenticate, authorize("admin"), deleteBulkBooking);
+router.delete("/:id", authenticate, authorize("admin"), deleteBooking);
 
 export default router;

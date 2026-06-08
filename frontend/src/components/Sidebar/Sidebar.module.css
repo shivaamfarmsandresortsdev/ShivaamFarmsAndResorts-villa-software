@@ -1,23 +1,36 @@
 .sidebar {
-  border-right: 1px solid rgba(0, 0, 0, 0.201);
+  border-right: 1px solid rgba(0, 0, 0, 0.10);
   position: fixed;
   top: 0;
   left: 0;
   height: 100vh;
   width: 250px;
   background-color: #f8f9fa;
-  /* padding: 1rem; */
   overflow-y: auto;
   transition: transform 0.3s ease-in-out;
   z-index: 1040;
+
+  /* Push logout to the very bottom */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Inner wrapper — takes full height, separates nav from logout */
+.sidebarInner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebarNav {
+  flex: 1;
 }
 
 .sidebarHeader {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.201);
-  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+  padding: 1.2rem 1.5rem;
   text-align: center;
-
-  
 }
 
 /* Active nav link */
@@ -28,7 +41,40 @@
   border-radius: 6px;
 }
 
-/* On small screens, sidebar is hidden by default */
+/* ── Logout section ──────────────────────────────────────────── */
+.logoutSection {
+  padding: 0 8px 16px;
+  margin-top: auto;
+}
+
+.logoutDivider {
+  margin: 0 8px 8px;
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #dc2626;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.logoutBtn:hover {
+  background: #fff5f5;
+}
+
+/* ── On small screens, sidebar is hidden by default ─────────── */
 @media (max-width: 767px) {
   .sidebar {
     transform: translateX(-100%);

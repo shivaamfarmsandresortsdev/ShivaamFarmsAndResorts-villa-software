@@ -1,27 +1,165 @@
+/* ── Navbar bar ──────────────────────────────────────────────────────────── */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.201);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.10);
   background-color: #fff;
   z-index: 1050;
   transition: margin-left 0.3s ease;
 }
 
-/* On desktop, push navbar to the right of the sidebar */
 @media (min-width: 768px) {
   .navbar {
-    margin-left: 250px; /* same as sidebar width */
+    margin-left: 250px;
     width: calc(100% - 250px);
   }
 }
 
-/* On mobile, navbar is full width */
 @media (max-width: 767px) {
   .navbar {
     margin-left: 0;
     width: 100%;
-    
   }
+}
+
+/* ── Profile trigger button ─────────────────────────────────────────────── */
+.profileBtn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 50px;
+  padding: 5px 10px 5px 5px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+.profileBtn:hover {
+  background: #f9fafb;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+
+/* ── Small avatar (navbar trigger) ──────────────────────────────────────── */
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* ── Name / role text in trigger ────────────────────────────────────────── */
+.profileName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+.profileRole {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* ── Caret arrow ────────────────────────────────────────────────────────── */
+.caret {
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.caretOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ─────────────────────────────────────────────────────── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  padding: 4px 0;
+  z-index: 2000;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Dropdown header (avatar + info) ───────────────────────────────────── */
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
+
+/* ── Large avatar inside dropdown ──────────────────────────────────────── */
+.avatarLg {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.dropdownName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
+}
+.dropdownEmail {
+  font-size: 11.5px;
+  color: #6b7280;
+  margin-top: 1px;
+  margin-bottom: 5px;
+  word-break: break-all;
+}
+
+/* ── Role pill ───────────────────────────────────────────────────────────── */
+.rolePill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  text-transform: capitalize;
+}
+
+/* ── Logout button ──────────────────────────────────────────────────────── */
+.dropdownLogout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #dc2626;
+  transition: background 0.12s;
+  text-align: left;
+}
+.dropdownLogout:hover {
+  background: #fff5f5;
 }

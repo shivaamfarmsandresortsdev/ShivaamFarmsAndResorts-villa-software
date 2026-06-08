@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./BookingSearchPopup.css";
+import { useAuth } from "../../context/AuthContext";
 
 // Base color palette
 const baseColors = [
@@ -39,19 +40,20 @@ const getVillaColor = (villa) => {
 
 
 const BookingSearchPopup = ({ onClose, onSelect }) => {
-  const role = localStorage.getItem("role");
-  const isAdmin = role === "admin";
+  const { user } = useAuth();
+  const isAdmin   = user?.role === "admin";
+  const canSeePayments = user?.role === "admin" || user?.role === "manager";
   const [bookings, setBookings] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const API_BASE = "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings?checked_in=false");
+        const res = await axios.get(`${API_BASE}/api/bookings?checked_in=false`, { withCredentials: true });
         const data = res.data.data || [];
         setBookings(data);
 
@@ -186,7 +188,7 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
 
                       // ✅ Normal booking
                       if (bookingId) {
-                        const res = await axios.get(`${API_BASE}/api/bookings/${bookingId}`);
+                        const res = await axios.get(`${API_BASE}/api/bookings/${bookingId}`, { withCredentials: true });
                         onSelect && onSelect(res.data.data);
                         onClose();
                         return;
@@ -194,7 +196,7 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
 
                       // ✅ Bulk booking (if your backend supports it)
                       if (bulkId) {
-                        const res = await axios.get(`${API_BASE}/api/bookings/bulk/${bulkId}`);
+                        const res = await axios.get(`${API_BASE}/api/bookings/bulk/${bulkId}`, { withCredentials: true });
                         onSelect && onSelect(res.data.data);
                         onClose();
                         return;
@@ -230,7 +232,7 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
                     {formatDate(b.check_out || b.checkOut)}
                   </div>
 
-                  {isAdmin && (
+                  {canSeePayments && (
                     <>
                       <div className="small mb-1">Payment: {getPaymentMode(b)}</div>
                       <div className="small mb-1">Advance: ₹{getAdvance(b)}</div>

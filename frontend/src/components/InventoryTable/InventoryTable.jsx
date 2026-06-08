@@ -12,9 +12,11 @@ const InventoryTable = ({ items: propsItems }) => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
-        const res = await fetch(`https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks/${id}`, {
+        const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+        const res = await fetch(`${API_BASE}/api/stocks/${id}`, {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" }
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
 
         const data = await res.json();

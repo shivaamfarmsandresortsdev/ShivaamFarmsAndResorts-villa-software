@@ -3,7 +3,7 @@ import Calendar from "../components/Calendar/Calendar";
 
 // ✅ Works both local + deployed
 const API_BASE =
-  import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+  import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 const CalendarPage = () => {
   const [bookedDatesByVilla, setBookedDatesByVilla] = useState({});
@@ -18,16 +18,24 @@ const CalendarPage = () => {
         setError(null);
 
         // 🔥 1️⃣ Fetch bookings
-        const bookingRes = await fetch(`${API_BASE}/api/bookings`);
+        const bookingRes = await fetch(`${API_BASE}/api/bookings`, { credentials: "include" });
+        if (!bookingRes.ok) {
+          const err = await bookingRes.json().catch(() => ({}));
+          throw new Error(err.message || `Bookings API error ${bookingRes.status}`);
+        }
         const bookingResult = await bookingRes.json();
         const bookingData = bookingResult.data || [];
 
-        // 🔥 2️⃣ Fetch villas
-        const villaRes = await fetch(`${API_BASE}/api/villas`);
-        const villaResult = await villaRes.json();
-        const villaDataList = villaResult.data || [];
+        // 🔥 2️⃣ Fetch villas (non-critical — fallback to empty list)
+        let villaDataList = [];
+        try {
+          const villaRes = await fetch(`${API_BASE}/api/villas`, { credentials: "include" });
+          if (villaRes.ok) {
+            const villaResult = await villaRes.json();
+            villaDataList = villaResult.data || [];
+          }
+        } catch (_) { /* villas are optional for calendar */ }
 
-        // ✅ Set villas
         setVillas(villaDataList);
 
         // 🔥 3️⃣ Convert bookings → calendar format

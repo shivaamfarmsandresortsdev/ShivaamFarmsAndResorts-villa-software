@@ -7,50 +7,56 @@ import { GoPeople } from "react-icons/go";
 import { LuBox } from "react-icons/lu";
 import { getStaff } from "../service/staffApi";
 import CheckAvailability from "../components/CheckAvailability/CheckAvailability";
+import { useAuth } from "../context/AuthContext";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
-
   const [staffCount, setStaffCount] = useState(0);
   const [totalBookings, setTotalBookings] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [items, setItems] = useState([]);
-
   const [lowStockItems, setLowStockItems] = useState([]);
   const [showLowStockModal, setShowLowStockModal] = useState(false);
 
-  const role = localStorage.getItem("role");
-  const isExecutive = role === "executive";
+  const { user } = useAuth();
+  const role     = user?.role;
+  const isAdmin  = role === "admin";
+  const isStaff  = role === "staff";
 
-  // ✅ Combined Fetch (Professional)
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
-        const [staffData, bookingRes, stockRes] = await Promise.all([
-          getStaff(),
-          fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings")
-            .then(res => res.json()),
-          fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks")
-            .then(res => res.json())
-        ]);
+        const promises = [
+          fetch(`${API_BASE}/api/bookings`, { credentials: "include" }).then(r => r.json()),
+        ];
 
-        // Staff
-        setStaffCount(staffData.length || 0);
+        // Only admin fetches staff + stocks (staff/manager get 403 otherwise)
+        if (isAdmin) {
+          promises.push(
+            getStaff().catch(() => []),
+            fetch(`${API_BASE}/api/stocks`, { credentials: "include" }).then(r => r.json()).catch(() => ({ data: [] }))
+          );
+        }
+
+        const [bookingRes, staffData, stockRes] = await Promise.all(promises);
 
         // Bookings
-        const bookingData = bookingRes.data || [];
-        setTotalBookings(bookingData.length || 0);
+        const bookingData = Array.isArray(bookingRes?.data) ? bookingRes.data : [];
+        setTotalBookings(bookingData.length);
+        setTotalRevenue(bookingData.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0));
 
-        const totalRev = bookingData.reduce(
-          (sum, item) => sum + (Number(item.total_amount) || 0),
-          0
-        );
-        setTotalRevenue(totalRev);
+        // Staff (admin only)
+        if (staffData) setStaffCount(Array.isArray(staffData) ? staffData.length : 0);
 
-        // Stocks
-        setItems(stockRes || []);
+        // Stocks (admin only)
+        if (stockRes) {
+          const stockArray = Array.isArray(stockRes) ? stockRes : (Array.isArray(stockRes?.data) ? stockRes.data : []);
+          setItems(stockArray);
+        }
 
       } catch (err) {
         console.error("Dashboard fetch error:", err);
@@ -59,10 +65,9 @@ const Dashboard = () => {
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    if (user) fetchDashboardData();
+  }, [user, isAdmin]);
 
-  // ✅ Low Stock Modal
   const handleLowStockClick = () => {
     const filtered = items.filter(
       (item) => Number(item.current_stock) <= Number(item.min_stock)
@@ -71,23 +76,13 @@ const Dashboard = () => {
     setShowLowStockModal(true);
   };
 
-  const totalItems = items.length;
-  const lowItems = items.filter(
-    (item) => Number(item.current_stock) <= Number(item.min_stock)
-  ).length;
+  const totalItems  = items.length;
+  const lowItems    = items.filter((item) => Number(item.current_stock) <= Number(item.min_stock)).length;
+  const stockHealth = totalItems > 0 ? `${Math.round(((totalItems - lowItems) / totalItems) * 100)}%` : "0%";
 
-  const stockHealth =
-    totalItems > 0
-      ? `${Math.round(((totalItems - lowItems) / totalItems) * 100)}%`
-      : "0%";
-
-  // ✅ FULL PAGE LOADER
-if (loading) {
+  if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
         <div className="text-center">
           <div className="spinner-border text-success" role="status"></div>
           <p className="mt-3 fw-semibold">Loading Dashboard...</p>
@@ -121,16 +116,18 @@ if (loading) {
             cardColor={"#A3CCDA"}
             navigateTo="/checkinform"
           />
-          <CardBasic
-            cardTitle={"Stock Update"}
-            cardText={"Update inventory levels"}
-            cardColor={"#FFF3B0"}
-            navigateTo="/stocks"
-          />
+          {isAdmin && (
+            <CardBasic
+              cardTitle={"Stock Update"}
+              cardText={"Update inventory levels"}
+              cardColor={"#FFF3B0"}
+              navigateTo="/stocks"
+            />
+          )}
         </div>
 
         {/* Overview */}
-        <div className={`row g-3 pb-4 ${isExecutive ? "justify-content-start" : "justify-content-center"}`}>
+        <div className="row g-3 pb-4 justify-content-center">
           <h2 className="fs-4 fw-500">Overview</h2>
 
           <Card
@@ -139,20 +136,18 @@ if (loading) {
             cardSubtitle={totalBookings.toString()}
           />
 
-          {!isExecutive && (
+          {isAdmin && (
             <>
               <Card
                 cardTitle={"Total Revenue"}
                 cardIcon={<MdCurrencyRupee fontSize={20} color="#000000" />}
                 cardSubtitle={`₹${totalRevenue.toLocaleString()}`}
               />
-
               <Card
                 cardTitle={"Total Staff"}
                 cardIcon={<GoPeople fontSize={20} color="#000000" />}
                 cardSubtitle={staffCount.toString()}
               />
-
               <Card
                 cardTitle={"Stock Status"}
                 cardIcon={<LuBox fontSize={20} color="#000000" />}
@@ -166,44 +161,24 @@ if (loading) {
 
         {/* Low Stock Modal */}
         {showLowStockModal && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              background: "rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
-            }}
-          >
-            <div
-              style={{
-                background: "#fff",
-                padding: "20px",
-                borderRadius: "10px",
-                width: "500px",
-                maxHeight: "90vh",
-                overflowY: "auto",
-              }}
-            >
+          <div style={{
+            position: "fixed", top: 0, left: 0,
+            width: "100vw", height: "100vh",
+            background: "rgba(0,0,0,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 9999,
+          }}>
+            <div style={{
+              background: "#fff", padding: "20px", borderRadius: "10px",
+              width: "500px", maxHeight: "90vh", overflowY: "auto",
+            }}>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="fw-bold">Low Stock Items</h5>
-                <button
-                  className="btn-close"
-                  onClick={() => setShowLowStockModal(false)}
-                ></button>
+                <button className="btn-close" onClick={() => setShowLowStockModal(false)} />
               </div>
-
               {lowStockItems.length > 0 ? (
                 lowStockItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="d-flex justify-content-between align-items-center bg-light border rounded p-3 mb-2"
-                  >
+                  <div key={item.id} className="d-flex justify-content-between align-items-center bg-light border rounded p-3 mb-2">
                     <div>
                       <div className="fw-semibold">{item.itemname}</div>
                       <small className="text-muted">
@@ -213,13 +188,12 @@ if (loading) {
                   </div>
                 ))
               ) : (
-                <p className="text-muted mb-0">
-                  No low stock items found.
-                </p>
+                <p className="text-muted mb-0">No low stock items found.</p>
               )}
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

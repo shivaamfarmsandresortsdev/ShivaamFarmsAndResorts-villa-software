@@ -80,7 +80,7 @@ const Finance = () => {
     setLoading(true); // 👈 START LOADING
 
     axios
-      .get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks")
+      .get(`${import.meta.env.VITE_API_BASE || "http://localhost:5000"}/api/stocks`)
       .then((res) => {
         if (Array.isArray(res.data)) {
           stockData = res.data.map((item) => ({
@@ -105,7 +105,7 @@ const Finance = () => {
         }
 
         return axios.get(
-          "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings"
+          `${import.meta.env.VITE_API_BASE || "http://localhost:5000"}/api/bookings`
         );
       })
       .then((res) => {
@@ -116,23 +116,23 @@ const Finance = () => {
             : [];
 
         bookingData = bookingArray.map((item) => ({
-          description: `${item.firstName || ""} ${item.lastName || ""} | ${item.villa || "Villa"}`,
-          date: item.checkIn || item.created_at || new Date().toISOString(),
-          customer_payment: Number(item.totalAmount || item.total_amount || 0),
-          advancedAmount: Number(item.advanceAmount || 0),
-          remainingAmount: Number(item.remainingAmount || 0),
+          description: `${item.guest || ""} | ${Array.isArray(item.villas) ? item.villas.join(", ") : (item.villa || "Villa")}`,
+          date: item.check_in || item.created_at || new Date().toISOString(),
+          customer_payment: Number(item.total_amount || 0),
+          advancedAmount: Number(item.advanced_amount || 0),
+          remainingAmount: Number(item.remaining_amount || 0),
           type: "profit",
           status: item.status || "completed",
           receivedBy: item.received_by || "Customer",
-          paymentMode: item.paymentMode || item.payment_mode || "Cash",
-          paymentCategory: "Customer Payment",
+          paymentMode: item.payment_mode || "Cash",
+          paymentCategory: item.payment_category || "Customer Payment",
           source: "Booking",
           gst_type: item.gst_type || "-",
           gst_amount: Number(item.gst_amount || 0),
           cgst_amount: Number(item.cgst_amount || 0),
           sgst_amount: Number(item.sgst_amount || 0),
           igst_amount: Number(item.igst_amount || 0),
-          total_amount: Number(item.totalAmount || item.total_amount || 0),
+          total_amount: Number(item.total_amount || 0),
         }));
 
         const combined = [...stockData, ...bookingData].sort(

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 const RecentTransactions = ({ transactions: transactionsProp }) => {
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
@@ -24,7 +26,7 @@ const RecentTransactions = ({ transactions: transactionsProp }) => {
     // let bookingData = [];
 
     axios
-      .get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks")
+      .get(`${API_BASE}/api/stocks`)
       .then((res) => {
         if (Array.isArray(res.data)) {
           stockData = res.data.map((item) => ({
@@ -46,7 +48,7 @@ const RecentTransactions = ({ transactions: transactionsProp }) => {
             total_amount: Number(item.price) || 0, // still keeping total_amount for summary
           }));
         }
-        return axios.get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings");
+        return axios.get(`${API_BASE}/api/bookings`);
       })
       .then((res) => {
         const bookingArray = Array.isArray(res.data)

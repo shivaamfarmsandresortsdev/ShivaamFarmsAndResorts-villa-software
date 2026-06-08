@@ -1,7 +1,7 @@
-// server.js
 import "dotenv/config.js";
 import cors from "cors";
 import express from "express";
+import cookieParser from "cookie-parser";
 import { supabase } from "./config/supabaseClient.js";
 
 import staffRoutes from "./routes/staffRoutes.js";
@@ -12,55 +12,103 @@ import expenseRoutes from "./routes/expense.js";
 import checkinRoutes from "./routes/checkinRoutes.js";
 import bookingInvoiceRoutes from "./routes/bookingInvoiceRoutes.js";
 import villaRoutes from "./routes/villaRoutes.js";
-// import invoiceRoutes from "./routes/invoiceRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+
+import { authenticate } from "./middleware/authenticate.js";
+import { authorize } from "./middleware/authorize.js";
 
 const app = express();
 
+// ─── CORS: allow specific frontend origins with credentials ───────────────────
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim());
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server requests (no origin) and listed origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
-app.use(cors())
+app.use(cookieParser());
 
-// ✅ Health check
+// ─── Health check ─────────────────────────────────────────────────────────────
+app.get("/", (req, res) => res.send("Server is running"));
+
 app.get("/__supabase_test", async (req, res) => {
-  const { data, error } = await supabase
-    .from("bookings")
-    .select("*")
-    .limit(1);
-
+  const { data, error } = await supabase.from("bookings").select("*").limit(1);
   res.json({ data, error });
 });
 
+// ─── Public routes ────────────────────────────────────────────────────────────
+app.use("/api/auth", authRoutes);
 
-app.get("/",(req,res)=>{
-  res.send("Server is running");
-})
+// ─── Admin-only: user management ──────────────────────────────────────────────
+app.use("/api/users", userRoutes);
 
-
-// ✅ Mount your routes
-app.use("/staff", staffRoutes);
-app.use("/api/stocks", stockRoutes);
+// ─── Booking routes (per-route auth defined inside bookingRoutes.js) ──────────
 app.use("/api/bookings", bookingRoutes);
-app.use("/api", bookingInvoiceRoutes);
-app.use("/api/checkins", checkinRoutes);
-app.use("/api/villas", villaRoutes);
-// app.use("/api", invoiceRoutes);
 
-// ✅ IMPORTANT — pass supabase client to these route functions
-app.use("/api/revenue", revenueRoutes(supabase));
-app.use("/api/expenses", expenseRoutes(supabase));
+// ─── Invoice (auth is handled inside bookingInvoiceRoutes) ───────────────────
+app.use("/api", bookingInvoiceRoutes);
+
+// ─── Check-ins (admin + manager + staff) ─────────────────────────────────────
+app.use("/api/checkins", authenticate, checkinRoutes);
+
+// ─── Villas (per-route auth defined inside villaRoutes.js) ───────────────────
+app.use("/api/villas", villaRoutes);
+
+// ─── Staff management (admin only) ────────────────────────────────────────────
+// Moved to /api/staff for consistency; kept old /staff alias for backward compat
+app.use("/api/staff", authenticate, authorize("admin"), staffRoutes);
+app.use("/staff", authenticate, authorize("admin"), staffRoutes);
+
+// ─── Stocks (admin only) ──────────────────────────────────────────────────────
+app.use("/api/stocks", authenticate, authorize("admin"), stockRoutes);
+
+// ─── Finance (admin only) ─────────────────────────────────────────────────────
+app.use("/api/revenue", authenticate, authorize("admin"), revenueRoutes(supabase));
+app.use("/api/expenses", authenticate, authorize("admin"), expenseRoutes(supabase));
+
+// ─── Route manifest ───────────────────────────────────────────────────────────
 app.get("/__routes_check", (req, res) => {
   res.json({
     routes: [
-      "POST /api/bookings",
-      "POST /api/bookings/bulk",
-      "PUT /api/bookings/bulk/:bulk_id",     // ✅ add this
-      "PUT /api/bookings/:id",
-      "DELETE /api/bookings/bulk/:bulk_id",
-      "DELETE /api/bookings/:id"
-    ]
+      "POST   /api/auth/login",
+      "POST   /api/auth/logout",
+      "GET    /api/auth/me",
+      "GET    /api/users         [admin]",
+      "POST   /api/users         [admin]",
+      "PUT    /api/users/:id     [admin]",
+      "DELETE /api/users/:id     [admin]",
+      "GET    /api/bookings      [all]",
+      "POST   /api/bookings      [all]",
+      "PUT    /api/bookings/:id  [admin,manager]",
+      "DELETE /api/bookings/:id  [admin]",
+      "GET    /api/villas        [all]",
+      "POST   /api/villas        [admin,manager]",
+      "DELETE /api/villas/:id    [admin]",
+      "GET    /api/staff         [admin]",
+      "GET    /api/stocks        [admin]",
+      "GET    /api/revenue       [admin]",
+      "GET    /api/expenses      [admin]",
+      "GET    /api/checkins      [all]",
+      "POST   /api/checkins      [all]",
+    ],
   });
 });
 
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

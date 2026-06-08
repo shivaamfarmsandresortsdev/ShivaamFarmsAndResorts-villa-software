@@ -22,9 +22,8 @@ const Stocks = () => {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(
-        "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks"
-      );
+      const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+      const res = await fetch(`${API_BASE}/api/stocks`, { credentials: "include" });
 
       const data = await res.json();
       setItems(data);
@@ -79,9 +78,11 @@ const Stocks = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/stocks", {
+      const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+      const res = await fetch(`${API_BASE}/api/stocks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           itemname: formData.itemname,
           villa: formData.villa,

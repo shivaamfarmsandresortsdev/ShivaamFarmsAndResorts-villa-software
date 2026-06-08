@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   FaHome,
   FaUserFriends,
@@ -10,6 +11,8 @@ import {
 } from "react-icons/fa";
 import { CiCalendar } from "react-icons/ci";
 import { GoPeople } from "react-icons/go";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import Calendar from "../components/Calendar/Calendar";
 import NewBooking from "../components/NewBooking/NewBooking";
 import EditBooking from "../components/EditBooking/EditBooking";
@@ -18,39 +21,7 @@ import Invoice from "../components/Invoice/Invoice";
 
 import "./Booking.css";
 
-
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
-// ---------------- CSV Export ----------------
-const exportToCSV = (rows, filename) => {
-  if (!rows.length) return;
-
-  const excludedKeys = [
-    "gstType",
-    "cgstAmount",
-    "sgstAmount",
-    "igstAmount",
-    "gstAmount",
-  ];
-
-
-  const headers = Object.keys(rows[0]).filter(
-    (h) => !excludedKeys.includes(h)
-  );
-
-  const csvContent =
-    "data:text/csv;charset=utf-8," +
-    [headers.join(","), ...rows.map((r) =>
-      headers.map((h) => JSON.stringify(r[h] ?? "")).join(",")
-    )].join("\n");
-
-  const link = document.createElement("a");
-  link.href = encodeURI(csvContent);
-  link.download = `${filename}.csv`;
-  link.click();
-};
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 // ---------------- Card Component ----------------
 const Card = ({ cardTitle, cardIcon, cardSubtitle }) => (
@@ -81,8 +52,14 @@ const Booking = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const role = localStorage.getItem("role");
-  const isExecutive = role === "executive";
+  const { user } = useAuth();
+  const role      = user?.role;
+  const isAdmin   = role === "admin";
+  const isManager = role === "manager";
+  const isStaff   = role === "staff";
+  const canSeePayments = isAdmin || isManager;
+  const canEdit        = isAdmin || isManager;
+  const canDelete      = isAdmin;
 
   // Filters
 
@@ -127,12 +104,84 @@ const Booking = () => {
     : 0;
 
 
+  const handleExportExcel = () => {
+    const rows = filteredBookings;
+    if (!rows.length) { alert("No bookings to export"); return; }
+
+    const today = new Date().toLocaleDateString("en-IN").replace(/\//g, "-");
+
+    const exportData = rows.map((b, i) => {
+      const row = {
+        "#": i + 1,
+        "Guest Name": b.guest || "-",
+        "Phone": b.phone || "-",
+        "Villas": Array.isArray(b.villas) ? b.villas.join(", ") : "-",
+        "Check-in": b.checkIn ? new Date(b.checkIn).toLocaleDateString("en-IN") : "-",
+        "Check-out": b.checkOut ? new Date(b.checkOut).toLocaleDateString("en-IN") : "-",
+        "Nights": b.nights || 0,
+        "Guests": b.guests || 0,
+        "Status": b.status || "-",
+        "Received By": b.receivedBy || "-",
+      };
+
+      if (canSeePayments) {
+        row["Base Amount (Rs.)"] = Number(b.baseAmount) || 0;
+        row["GST Type"] = b.gstType || "-";
+        row["Total Amount (Rs.)"] = Number(b.totalAmount) || 0;
+        row["Advanced (Rs.)"] = Number(b.advancedAmount) || 0;
+        row["Remaining (Rs.)"] = b.paymentCategory === "Advanced"
+          ? Number(b.remainingAmount) || 0
+          : 0;
+        row["Payment Mode"] = b.paymentMode || "-";
+        row["Payment Category"] = b.paymentCategory || "-";
+        row["Customer Payment (Rs.)"] = b.paymentCategory === "Advanced"
+          ? Number(b.advancedAmount) || 0
+          : Number(b.totalAmount) || 0;
+      }
+
+      row["Address"] = b.address || "-";
+      return row;
+    });
+
+    // Summary rows
+    if (canSeePayments) {
+      const totalAmt   = rows.reduce((s, b) => s + (Number(b.totalAmount) || 0), 0);
+      const totalAdv   = rows.reduce((s, b) => s + (Number(b.advancedAmount) || 0), 0);
+      const totalRem   = rows.reduce((s, b) => s + (b.paymentCategory === "Advanced" ? Number(b.remainingAmount) || 0 : 0), 0);
+      const cashAmt    = rows.filter(b => b.paymentMode === "Cash").reduce((s, b) => s + (Number(b.totalAmount) || 0), 0);
+      const onlineAmt  = rows.filter(b => b.paymentMode === "Online").reduce((s, b) => s + (Number(b.totalAmount) || 0), 0);
+      const confirmed  = rows.filter(b => b.status === "Confirmed" || Number(b.remainingAmount) === 0).length;
+      const pending    = rows.filter(b => b.status === "Pending").length;
+
+      exportData.push(
+        {},
+        { "Guest Name": "SUMMARY", "Nights": `Total Bookings: ${rows.length}` },
+        { "Guest Name": "Grand Total",          "Total Amount (Rs.)": totalAmt, "Advanced (Rs.)": totalAdv, "Remaining (Rs.)": totalRem },
+        { "Guest Name": "Cash Transactions",    "Total Amount (Rs.)": cashAmt },
+        { "Guest Name": "Online Transactions",  "Total Amount (Rs.)": onlineAmt },
+        { "Guest Name": "Confirmed Bookings",   "Nights": confirmed },
+        { "Guest Name": "Pending Bookings",     "Nights": pending },
+      );
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook  = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Bookings");
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    saveAs(
+      new Blob([excelBuffer], { type: "application/octet-stream" }),
+      `Bookings_${today}.xlsx`
+    );
+  };
+
   const fetchBookings = async () => {
     try {
       setLoading(true);   // ✅ start loading
 
       const res = await fetch(
-        "https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings"
+        `${API_BASE}/api/bookings`,
+        { credentials: "include" }
       );
 
       const json = await res.json();
@@ -215,7 +264,7 @@ const Booking = () => {
     )) return;
 
     try {
-      const res = await fetch(url, { method: "DELETE" });
+      const res = await fetch(url, { method: "DELETE", credentials: "include" });
       const body = await res.json();
 
       if (!res.ok) {
@@ -238,10 +287,11 @@ const Booking = () => {
 
     try {
       const response = await fetch(
-        `https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings/${bookingId}`,
+        `${API_BASE}/api/bookings/${bookingId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(updatedBooking),
         }
       );
@@ -327,9 +377,9 @@ const Booking = () => {
             <div className="d-flex gap-2 flex-wrap">
               <button
                 className="btn btn-success d-flex align-items-center"
-                onClick={() => exportToCSV(filteredBookings, "Bookings")}
+                onClick={handleExportExcel}
               >
-                <FaFileCsv className="me-2" /> Export CSV
+                <FaFileCsv className="me-2" /> Export Excel
               </button>
             </div>
           </div>
@@ -372,14 +422,9 @@ const Booking = () => {
                       <th>Guests</th>
                       <th>Status</th>
                       <th>Received By</th>
-                      {!isExecutive && (
+                      {canSeePayments && (
                         <>
                           <th>Base Amount (₹)</th>
-                          {/* <th>GST Type</th>
-                          <th>CGST (₹)</th>
-                          <th>SGST (₹)</th>
-                          <th>IGST (₹)</th>
-                          <th>GST Total (₹)</th> */}
                           <th>Total Amount (₹)</th>
                           <th>Advance (₹)</th>
                           <th>Balance</th>
@@ -387,9 +432,9 @@ const Booking = () => {
                           <th>Payment Category</th>
                           <th>Customer Payment (₹)</th>
                           <th>Address</th>
-                          <th>Actions</th>
                         </>
                       )}
+                      {(canEdit || canDelete) && <th>Actions</th>}
                     </tr>
                   </thead>
 
@@ -437,14 +482,11 @@ const Booking = () => {
                           </span>
                         </td>
                         <td>{b.receivedBy || "-"}</td>
-                        {!isExecutive && (
+
+                        {/* Payment columns — admin + manager only */}
+                        {canSeePayments && (
                           <>
                             <td>₹ {b.baseAmount || 0}</td>
-                            {/* <td>{b.gstType}</td>
-                            <td>₹ {b.cgstAmount}</td>
-                            <td>₹ {b.sgstAmount}</td>
-                            <td>₹ {b.igstAmount}</td>
-                            <td>₹ {b.gstAmount}</td> */}
                             <td>₹ {b.totalAmount}</td>
                             <td>₹ {b.advancedAmount || 0}</td>
                             <td>
@@ -464,33 +506,41 @@ const Booking = () => {
                             <td style={{ maxWidth: "200px", whiteSpace: "normal" }}>
                               {b.address || "-"}
                             </td>
-                            <td>
+                          </>
+                        )}
+
+                        {/* Actions column — admin + manager */}
+                        {(canEdit || canDelete) && (
+                          <td>
+                            {canEdit && (
                               <button
                                 className="btn btn-sm btn-outline-primary me-1"
                                 onClick={() => {
                                   setSelectedBooking(b);
-
-                                  if (b.bulk_id) {
-                                    setShowEditBulkBooking(true); // BULK
-                                  } else {
-                                    setShowEditBooking(true);     // SINGLE
-                                  }
+                                  if (b.bulk_id) setShowEditBulkBooking(true);
+                                  else setShowEditBooking(true);
                                 }}
                               >
                                 <FaEdit />
                               </button>
-                              <button className="btn btn-sm btn-outline-danger px-2 me-1" onClick={() => handleDeleteBooking(b)}>
+                            )}
+                            {canDelete && (
+                              <button
+                                className="btn btn-sm btn-outline-danger px-2 me-1"
+                                onClick={() => handleDeleteBooking(b)}
+                              >
                                 <FaTrash />
                               </button>
-                              <button className="btn btn-sm btn-outline-primary px-2 me-1" onClick={() => {
-                                setSelectedBooking(b);
-                                setShowInvoice(true);
-                              }}
+                            )}
+                            {canSeePayments && (
+                              <button
+                                className="btn btn-sm btn-outline-primary px-2 me-1"
+                                onClick={() => { setSelectedBooking(b); setShowInvoice(true); }}
                               >
                                 <FaFileCsv />
                               </button>
-                            </td>
-                          </>
+                            )}
+                          </td>
                         )}
                       </tr>
                     ))}

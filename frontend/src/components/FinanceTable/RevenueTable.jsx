@@ -27,6 +27,8 @@ ChartJS.register(
   ChartDataLabels
 );
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 const RevenueTable = () => {
   const [revenueData, setRevenueData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ const RevenueTable = () => {
   useEffect(() => {
     const fetchBookingRevenue = async () => {
       try {
-        const res = await axios.get("https://shivaamfarmsandresorts-villa-software-1.onrender.com/api/bookings");
+        const res = await axios.get(`${API_BASE}/api/bookings`);
         const bookings = Array.isArray(res.data)
           ? res.data
           : res.data.bookings || res.data.data || [];

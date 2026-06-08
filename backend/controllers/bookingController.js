@@ -216,11 +216,15 @@ export const getAllBookings = async (req, res) => {
 
             villas: [],
 
-            // ✅ MONEY FIELDS YOU CARE ABOUT
             base_amount: 0,
             total_amount: 0,
             advanced_amount: 0,
             remaining_amount: 0,
+            gst_type: b.gst_type || "-",
+            gst_amount: 0,
+            cgst_amount: 0,
+            sgst_amount: 0,
+            igst_amount: 0,
 
             payment_mode: b.payment_mode,
             payment_category: b.payment_category,
@@ -237,6 +241,10 @@ export const getAllBookings = async (req, res) => {
         acc[key].total_amount += Number(b.total_amount || 0);
         acc[key].advanced_amount += Number(b.advanced_amount || 0);
         acc[key].remaining_amount += Number(b.remaining_amount || 0);
+        acc[key].gst_amount += Number(b.gst_amount || 0);
+        acc[key].cgst_amount += Number(b.cgst_amount || 0);
+        acc[key].sgst_amount += Number(b.sgst_amount || 0);
+        acc[key].igst_amount += Number(b.igst_amount || 0);
 
         return acc;
       }, {})
