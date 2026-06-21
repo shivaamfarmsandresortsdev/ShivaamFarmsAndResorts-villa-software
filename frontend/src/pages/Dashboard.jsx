@@ -9,7 +9,7 @@ import { getStaff } from "../service/staffApi";
 import CheckAvailability from "../components/CheckAvailability/CheckAvailability";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);

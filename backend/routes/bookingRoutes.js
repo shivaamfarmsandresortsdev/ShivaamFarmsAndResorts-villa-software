@@ -23,8 +23,8 @@ router.get("/bulk/:bulk_id", authenticate, getBulkBookingById);
 router.get("/villa/:villa/dates", authenticate, getBookedDates);
 router.get("/villa/:villa", authenticate, getBookingsByVilla);
 
-// Invoice: admin + manager only
-router.get("/:id/invoice", authenticate, authorize("admin", "manager"), generateInvoice);
+// Invoice: all authenticated roles
+router.get("/:id/invoice", authenticate, generateInvoice);
 
 // ── Create (all roles) ────────────────────────────────────────────────────────
 router.post("/", authenticate, addBooking);

@@ -21,7 +21,7 @@ import Invoice from "../components/Invoice/Invoice";
 
 import "./Booking.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
 
 // ---------------- Card Component ----------------
 const Card = ({ cardTitle, cardIcon, cardSubtitle }) => (
@@ -434,7 +434,7 @@ const Booking = () => {
                           <th>Address</th>
                         </>
                       )}
-                      {(canEdit || canDelete) && <th>Actions</th>}
+                      <th>Actions</th>
                     </tr>
                   </thead>
 
@@ -510,38 +510,35 @@ const Booking = () => {
                         )}
 
                         {/* Actions column — admin + manager */}
-                        {(canEdit || canDelete) && (
-                          <td>
-                            {canEdit && (
-                              <button
-                                className="btn btn-sm btn-outline-primary me-1"
-                                onClick={() => {
-                                  setSelectedBooking(b);
-                                  if (b.bulk_id) setShowEditBulkBooking(true);
-                                  else setShowEditBooking(true);
-                                }}
-                              >
-                                <FaEdit />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button
-                                className="btn btn-sm btn-outline-danger px-2 me-1"
-                                onClick={() => handleDeleteBooking(b)}
-                              >
-                                <FaTrash />
-                              </button>
-                            )}
-                            {canSeePayments && (
-                              <button
-                                className="btn btn-sm btn-outline-primary px-2 me-1"
-                                onClick={() => { setSelectedBooking(b); setShowInvoice(true); }}
-                              >
-                                <FaFileCsv />
-                              </button>
-                            )}
-                          </td>
-                        )}
+                        <td>
+                          {canEdit && (
+                            <button
+                              className="btn btn-sm btn-outline-primary me-1"
+                              onClick={() => {
+                                setSelectedBooking(b);
+                                if (b.bulk_id) setShowEditBulkBooking(true);
+                                else setShowEditBooking(true);
+                              }}
+                            >
+                              <FaEdit />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              className="btn btn-sm btn-outline-danger px-2 me-1"
+                              onClick={() => handleDeleteBooking(b)}
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
+                          <button
+                            className="btn btn-sm btn-outline-primary px-2 me-1"
+                            onClick={() => { setSelectedBooking(b); setShowInvoice(true); }}
+                            title="View / Share Invoice"
+                          >
+                            <FaFileCsv />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

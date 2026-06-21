@@ -4,7 +4,7 @@ import { FiUsers } from "react-icons/fi";
 import toast from "react-hot-toast";
 import "./Users.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
 
 const EMPTY_FORM = { name: "", email: "", password: "", role: "staff" };
 
