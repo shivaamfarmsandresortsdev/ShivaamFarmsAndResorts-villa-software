@@ -12,7 +12,27 @@ export const insertBooking = async (bookingData) => {
 };
 
 export const fetchAllBookings = async () => {
-  return await supabase.from("bookings").select("*");
+  const pageSize = 1000;
+  let allRows = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .order("id", { ascending: false })
+      .range(from, from + pageSize - 1);
+
+    if (error) return { data: allRows, error };
+    if (!data || data.length === 0) break;
+
+    allRows = allRows.concat(data);
+    if (data.length < pageSize) break; // last page reached
+
+    from += pageSize;
+  }
+
+  return { data: allRows, error: null };
 };
 
 export const deleteBookingById = async (id) => {
