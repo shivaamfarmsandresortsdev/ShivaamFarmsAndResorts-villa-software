@@ -24,7 +24,7 @@ const getMaxDomain = (data) => {
   return Math.ceil(Math.max(maxRevenue, maxExpenses) / 1000) * 1000;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 
 const OverviewCharts = () => {
   const [chartData, setChartData] = useState([]);

@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 const API_URL  = `${API_BASE}/api/staff`;
 
 const opts = (method, body) => ({

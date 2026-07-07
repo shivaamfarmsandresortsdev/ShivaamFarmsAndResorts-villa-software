@@ -47,7 +47,7 @@ const BookingSearchPopup = ({ onClose, onSelect }) => {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+  const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 
   useEffect(() => {
     const fetchBookings = async () => {

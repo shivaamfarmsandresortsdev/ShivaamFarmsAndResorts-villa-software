@@ -27,7 +27,7 @@ ChartJS.register(
   ChartDataLabels
 );
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 
 const RevenueTable = () => {
   const [revenueData, setRevenueData] = useState({});

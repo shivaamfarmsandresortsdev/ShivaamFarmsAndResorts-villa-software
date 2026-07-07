@@ -119,7 +119,7 @@ const EditBulkBooking = ({ bulkBooking, onClose, onSave }) => {
         return;
       }
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 const url = `${API_BASE}/api/bookings/bulk/${bulkData.bulkId}`;
 
       console.log("PUT URL:", url);

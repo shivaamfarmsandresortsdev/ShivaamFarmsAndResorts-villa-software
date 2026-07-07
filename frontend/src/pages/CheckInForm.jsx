@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import SearchBookingPopup from "../components/BookingSearchPopup/BookingSearchPopup.jsx";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 
 const CheckInForm = () => {
   const [formData, setFormData] = useState({

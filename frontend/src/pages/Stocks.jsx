@@ -22,7 +22,7 @@ const Stocks = () => {
       setLoading(true);
       setError(null);
 
-      const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+      const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
       const res = await fetch(`${API_BASE}/api/stocks`, { credentials: "include" });
 
       const data = await res.json();
@@ -78,7 +78,7 @@ const Stocks = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+      const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
       const res = await fetch(`${API_BASE}/api/stocks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

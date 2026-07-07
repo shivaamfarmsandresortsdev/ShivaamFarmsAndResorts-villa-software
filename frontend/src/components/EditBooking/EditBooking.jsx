@@ -158,7 +158,7 @@ const EditBooking = ({ booking, onClose, onSave }) => {
 
     setLoading(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+      const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
       const res = await fetch(
         `${API_BASE}/api/bookings/${bookingId}`,
         {

@@ -21,7 +21,7 @@ import Invoice from "../components/Invoice/Invoice";
 
 import "./Booking.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 
 // ---------------- Card Component ----------------
 const Card = ({ cardTitle, cardIcon, cardSubtitle }) => (

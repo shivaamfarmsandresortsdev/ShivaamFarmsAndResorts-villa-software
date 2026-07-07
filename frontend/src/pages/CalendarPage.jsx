@@ -3,7 +3,7 @@ import Calendar from "../components/Calendar/Calendar";
 
 // ✅ Works both local + deployed
 const API_BASE =
-  import.meta.env.VITE_API_BASE || "https://shivaamfarmsandresorts-villa-software-1.onrender.com";
+  import.meta.env.VITE_API_BASE || "https://api.shivaamfarmsandresorts.com";
 
 const CalendarPage = () => {
   const [bookedDatesByVilla, setBookedDatesByVilla] = useState({});
