@@ -403,23 +403,36 @@ const Finance = () => {
           <h4 className="fw-bold">Finance Overview</h4>
           <p className="text-muted mb-0">Track revenue, expenses, and profitability</p>
         </div>
-        <div className="d-flex flex-wrap gap-2 align-items-center ms-auto">
-          <div className="dropdown">
-            <button className="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-              {timeRange}
+        <div className="ms-auto d-flex flex-column align-items-end gap-2">
+          {/* Row 1: dropdown + export buttons */}
+          <div className="d-flex gap-2 align-items-center">
+            <div className="dropdown">
+              <button className="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                {timeRange}
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end">
+                {filterOptions.map((range) => (
+                  <li key={range}>
+                    <button className="dropdown-item" onClick={() => setTimeRange(range)}>
+                      {range}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button className="btn btn-outline-secondary" onClick={handleExportPDF}>
+              Export PDF
             </button>
-            <ul className="dropdown-menu">
-              {filterOptions.map((range) => (
-                <li key={range}>
-                  <button className="dropdown-item" onClick={() => setTimeRange(range)}>
-                    {range}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <button
+              className="btn btn-outline-secondary"
+              onClick={() => handleExportCSV(transactionsForDisplay)}
+            >
+              Export CSV/Excel
+            </button>
           </div>
+          {/* Row 2: date inputs — only when Custom Range selected */}
           {timeRange === "Custom Range" && (
-            <>
+            <div className="d-flex gap-2 align-items-center">
               <input
                 type="date"
                 className="form-control form-control-sm"
@@ -428,7 +441,7 @@ const Finance = () => {
                 onChange={(e) => setExportFromDate(e.target.value)}
                 title="From Date"
               />
-              <span className="text-muted">to</span>
+              <span className="text-muted small">to</span>
               <input
                 type="date"
                 className="form-control form-control-sm"
@@ -437,17 +450,8 @@ const Finance = () => {
                 onChange={(e) => setExportToDate(e.target.value)}
                 title="To Date"
               />
-            </>
+            </div>
           )}
-          <button className="btn btn-outline-secondary" onClick={handleExportPDF}>
-            Export PDF
-          </button>
-          <button
-            className="btn btn-outline-secondary"
-            onClick={() => handleExportCSV(transactionsForDisplay)}
-          >
-            Export CSV/Excel
-          </button>
         </div>
       </div>
 
