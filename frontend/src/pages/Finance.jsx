@@ -398,12 +398,12 @@ const Finance = () => {
   }
   return (
     <div className="container-fluid mt-4">
-      <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <div className="d-flex flex-wrap align-items-center mb-3">
         <div>
           <h4 className="fw-bold">Finance Overview</h4>
           <p className="text-muted mb-0">Track revenue, expenses, and profitability</p>
         </div>
-        <div className="d-flex flex-wrap gap-2 align-items-center">
+        <div className="d-flex flex-wrap gap-2 align-items-center ms-auto">
           <div className="dropdown">
             <button className="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
               {timeRange}
