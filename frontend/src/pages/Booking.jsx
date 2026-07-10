@@ -52,6 +52,9 @@ const Booking = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const [exportFromDate, setExportFromDate] = useState("");
+  const [exportToDate, setExportToDate] = useState("");
+
   const { user } = useAuth();
   const role      = user?.role;
   const isAdmin   = role === "admin";
@@ -105,10 +108,25 @@ const Booking = () => {
 
 
   const handleExportExcel = () => {
-    const rows = filteredBookings;
-    if (!rows.length) { alert("No bookings to export"); return; }
+    let rows = filteredBookings;
 
-    const today = new Date().toLocaleDateString("en-IN").replace(/\//g, "-");
+    if (exportFromDate || exportToDate) {
+      const from = exportFromDate ? new Date(exportFromDate) : null;
+      const to = exportToDate ? new Date(new Date(exportToDate).setHours(23, 59, 59, 999)) : null;
+      rows = rows.filter((b) => {
+        const checkIn = b.checkIn ? new Date(b.checkIn) : null;
+        if (!checkIn) return true;
+        if (from && checkIn < from) return false;
+        if (to && checkIn > to) return false;
+        return true;
+      });
+    }
+
+    if (!rows.length) { alert("No bookings to export for selected date range"); return; }
+
+    const today = exportFromDate && exportToDate
+      ? `${exportFromDate}_to_${exportToDate}`
+      : new Date().toLocaleDateString("en-IN").replace(/\//g, "-");
 
     const exportData = rows.map((b, i) => {
       const row = {
@@ -374,7 +392,24 @@ const Booking = () => {
 
             </div>
 
-            <div className="d-flex gap-2 flex-wrap">
+            <div className="d-flex gap-2 flex-wrap align-items-center">
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                style={{ width: "145px" }}
+                value={exportFromDate}
+                onChange={(e) => setExportFromDate(e.target.value)}
+                title="Export From Date"
+              />
+              <span className="text-muted">to</span>
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                style={{ width: "145px" }}
+                value={exportToDate}
+                onChange={(e) => setExportToDate(e.target.value)}
+                title="Export To Date"
+              />
               <button
                 className="btn btn-success d-flex align-items-center"
                 onClick={handleExportExcel}

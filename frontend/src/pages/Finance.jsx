@@ -50,10 +50,12 @@ const Finance = () => {
   const [stockLabels, setStockLabels] = useState([]);
   const [loading, setLoading] = useState(true);
 
-
   const [transactions, setTransactions] = useState([]);
   const [transactionsForDisplay, setTransactionsForDisplay] = useState([]);
   const transactionsRef = useRef();
+
+  const [exportFromDate, setExportFromDate] = useState("");
+  const [exportToDate, setExportToDate] = useState("");
 
   const getStartDateFromRange = (range) => {
     const now = new Date();
@@ -68,6 +70,8 @@ const Finance = () => {
         return new Date(now.getFullYear(), now.getMonth() - 6, 1);
       case "Last Year":
         return new Date(now.getFullYear() - 1, now.getMonth(), 1);
+      case "Custom Range":
+        return null;
       default:
         return null;
     }
@@ -151,10 +155,22 @@ const Finance = () => {
 
 
   useEffect(() => {
-    const startDate = getStartDateFromRange(timeRange);
-    const filteredData = startDate
-      ? transactions.filter((t) => new Date(t.date) >= startDate)
-      : transactions;
+    let filteredData;
+    if (timeRange === "Custom Range") {
+      filteredData = transactions.filter((t) => {
+        const tDate = new Date(t.date);
+        const from = exportFromDate ? new Date(exportFromDate) : null;
+        const to = exportToDate ? new Date(new Date(exportToDate).setHours(23, 59, 59, 999)) : null;
+        if (from && tDate < from) return false;
+        if (to && tDate > to) return false;
+        return true;
+      });
+    } else {
+      const startDate = getStartDateFromRange(timeRange);
+      filteredData = startDate
+        ? transactions.filter((t) => new Date(t.date) >= startDate)
+        : transactions;
+    }
 
     setTransactionsForDisplay(filteredData);
 
@@ -201,9 +217,9 @@ const Finance = () => {
 
     setStockPrices(stockAmounts);
     setStockLabels(stockLabels);
-  }, [timeRange, transactions]);
+  }, [timeRange, transactions, exportFromDate, exportToDate]);
 
-  const filterOptions = ["This Month", "Last 2 Month", "Last 3 Months", "Last 6 Months", "Last Year"];
+  const filterOptions = ["This Month", "Last 2 Month", "Last 3 Months", "Last 6 Months", "Last Year", "Custom Range"];
 
   const handleExportPDF = () => {
     if (!transactionsForDisplay || transactionsForDisplay.length === 0) {
@@ -221,7 +237,10 @@ const Finance = () => {
 
     // Add timestamp and filter info
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
-    doc.text(`Time Range: ${timeRange}`, 14, 27);
+    const rangeLabel = timeRange === "Custom Range" && exportFromDate && exportToDate
+      ? `${exportFromDate} to ${exportToDate}`
+      : timeRange;
+    doc.text(`Time Range: ${rangeLabel}`, 14, 27);
 
     const tableColumn = ["#", "Source", "Description", "Date", "Adv. Amt", "Rem. Amt", "Status", "Recv. By", "Mode", "Category", "Total"];
     const tableRows = [];
@@ -274,7 +293,10 @@ const Finance = () => {
       margin: { top: 35 },
     });
 
-    doc.save(`FinanceReport_${timeRange.replace(/\s+/g, "_")}.pdf`);
+    const pdfFilename = timeRange === "Custom Range" && exportFromDate && exportToDate
+      ? `FinanceReport_${exportFromDate}_to_${exportToDate}.pdf`
+      : `FinanceReport_${timeRange.replace(/\s+/g, "_")}.pdf`;
+    doc.save(pdfFilename);
   };
 
   const handleExportCSV = (transactions) => {
@@ -353,7 +375,10 @@ const Finance = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "RecentTransactions");
 
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), `FinanceReport_${timeRange.replace(/\s+/g, "_")}.xlsx`);
+    const xlsxFilename = timeRange === "Custom Range" && exportFromDate && exportToDate
+      ? `FinanceReport_${exportFromDate}_to_${exportToDate}.xlsx`
+      : `FinanceReport_${timeRange.replace(/\s+/g, "_")}.xlsx`;
+    saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), xlsxFilename);
     // saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), "RecentTransactions.xlsx");
   };
 
@@ -378,7 +403,7 @@ const Finance = () => {
           <h4 className="fw-bold">Finance Overview</h4>
           <p className="text-muted mb-0">Track revenue, expenses, and profitability</p>
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-wrap gap-2 align-items-center">
           <div className="dropdown">
             <button className="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
               {timeRange}
@@ -393,6 +418,27 @@ const Finance = () => {
               ))}
             </ul>
           </div>
+          {timeRange === "Custom Range" && (
+            <>
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                style={{ width: "145px" }}
+                value={exportFromDate}
+                onChange={(e) => setExportFromDate(e.target.value)}
+                title="From Date"
+              />
+              <span className="text-muted">to</span>
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                style={{ width: "145px" }}
+                value={exportToDate}
+                onChange={(e) => setExportToDate(e.target.value)}
+                title="To Date"
+              />
+            </>
+          )}
           <button className="btn btn-outline-secondary" onClick={handleExportPDF}>
             Export PDF
           </button>
